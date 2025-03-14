@@ -34,8 +34,8 @@ const SignUp = () => {
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Registration failed",
-        description: "Please check your information and try again.",
+        title: "Sign up failed",
+        description: "There was an error creating your account.",
       });
     } finally {
       setIsLoading(false);
@@ -48,10 +48,10 @@ const SignUp = () => {
         <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-border">
           <div className="text-center">
             <h2 className="text-3xl font-bold tracking-tight">
-              Create an account
+              Create your account
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Join NutriTrack and start tracking your nutrition
+              Sign up to get started with NutriTrack
             </p>
           </div>
 
@@ -66,8 +66,7 @@ const SignUp = () => {
                   onChange={(e) => setName(e.target.value)}
                   required
                   className="mt-1"
-                  placeholder="John Doe"
-                  autoComplete="name"
+                  placeholder="Enter your full name"
                 />
               </div>
               
@@ -80,7 +79,7 @@ const SignUp = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="mt-1"
-                  placeholder="email@example.com"
+                  placeholder="Enter your email"
                   autoComplete="email"
                 />
               </div>
@@ -98,16 +97,16 @@ const SignUp = () => {
                   autoComplete="new-password"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Password must be at least 8 characters long
+                  Password must be at least 8 characters
                 </p>
               </div>
-
+              
               <div>
                 <Label>Account Type</Label>
                 <RadioGroup 
                   value={role} 
                   onValueChange={(value) => setRole(value as 'student' | 'trainer')}
-                  className="flex flex-col space-y-2 mt-2"
+                  className="mt-2 flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="student" id="student" />
@@ -130,7 +129,7 @@ const SignUp = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    Creating Account...
                   </>
                 ) : (
                   "Sign up"

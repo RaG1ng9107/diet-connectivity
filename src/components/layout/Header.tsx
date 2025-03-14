@@ -1,177 +1,184 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { 
+import { useAuth } from '@/context/AuthContext';
+import { Menu, X, LogOut, User } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-const Header: React.FC = () => {
+const Header = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    // Close mobile menu when route changes
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    ...(!isAuthenticated 
-      ? [
-          { name: 'Login', path: '/login' },
-          { name: 'Sign Up', path: '/signup' },
-        ] 
-      : [
-          { name: user?.role === 'student' ? 'Dashboard' : 'Trainer Dashboard', 
-            path: user?.role === 'student' ? '/dashboard' : '/trainer-dashboard' },
-        ]
-    ),
-  ];
+  const getInitials = (name: string) => {
+    return name
+      ?.split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase() || 'U';
+  };
 
   const handleLogout = () => {
     logout();
+    navigate('/');
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
-    }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <span className="text-xl font-display font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600">
-                NutriTrack
-              </span>
+    <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
+      <div className="container flex items-center justify-between h-16 max-w-6xl">
+        <Link to="/" className="text-xl font-bold flex items-center">
+          NutriTrack
+        </Link>
+
+        {/* Desktop Menu */}
+        {!isMobile && (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+              Home
             </Link>
-          </div>
-
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className={`text-sm font-medium transition-colors duration-200 hover:text-primary ${
-                  location.pathname === link.path
-                    ? 'text-primary'
-                    : 'text-foreground/80'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-
-            {isAuthenticated && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <span className="sr-only">User menu</span>
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{user?.name}</span>
-                      <span className="text-xs text-muted-foreground">{user?.email}</span>
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  to={user?.role === 'student' ? '/dashboard' : '/trainer-dashboard'} 
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                >
+                  Dashboard
+                </Link>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{getInitials(user?.name || '')}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-0.5">
+                        <p className="text-sm font-medium">{user?.name}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      </div>
                     </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="cursor-pointer">Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to={user?.role === 'student' ? '/dashboard' : '/trainer-dashboard'} className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm font-medium hover:text-primary transition-colors">
+                  Log in
+                </Link>
+                <Button asChild size="sm">
+                  <Link to="/signup">Sign up</Link>
+                </Button>
+              </>
             )}
           </nav>
+        )}
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="h-6 w-6" aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-        </div>
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        )}
       </div>
 
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-background border-b"
-          >
-            <div className="px-4 pt-2 pb-4 space-y-1 sm:px-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    location.pathname === link.path
-                      ? 'text-primary bg-primary/5'
-                      : 'text-foreground hover:bg-secondary hover:text-foreground/90'
-                  }`}
+      {/* Mobile Menu */}
+      {isMobile && mobileMenuOpen && (
+        <div className="fixed inset-0 top-16 z-40 bg-background p-4 flex flex-col">
+          <div className="flex flex-col space-y-4 py-4">
+            <Link 
+              to="/" 
+              className="px-4 py-2 text-lg font-medium hover:bg-muted rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  to={user?.role === 'student' ? '/dashboard' : '/trainer-dashboard'} 
+                  className="px-4 py-2 text-lg font-medium hover:bg-muted rounded-md"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  {link.name}
+                  Dashboard
                 </Link>
-              ))}
-              
-              {isAuthenticated && (
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-destructive hover:bg-destructive/5"
+                
+                <div className="border-t mt-2 pt-2">
+                  <div className="px-4 py-2 flex items-center">
+                    <Avatar className="h-8 w-8 mr-3">
+                      <AvatarFallback>{getInitials(user?.name || '')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{user?.name}</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="px-4 py-2 text-lg font-medium hover:bg-muted rounded-md w-full justify-start"
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className="px-4 py-2 text-lg font-medium hover:bg-muted rounded-md"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Logout
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  Log in
+                </Link>
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="mt-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/signup">Sign up</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };
