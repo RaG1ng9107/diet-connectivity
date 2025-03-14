@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserProfile from '@/components/UserProfile';
 import PageTransition from '@/components/layout/PageTransition';
@@ -10,58 +10,7 @@ import { useMacros, FeedbackItem } from '@/hooks/useMacros';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockFoodDatabase } from '@/data/foodDatabase';
 import { Meal } from '@/components/MealLogger';
-
-// Mock student data
-const mockStudents = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    lastActive: '2 hours ago',
-    status: 'on-track' as const,
-    calorieTarget: 2200,
-    currentCalories: 1950,
-    protein: { consumed: 120, goal: 135 },
-    carbs: { consumed: 180, goal: 220 },
-    fat: { consumed: 60, goal: 70 },
-  },
-  {
-    id: '2',
-    name: 'David Chen',
-    email: 'david@example.com',
-    lastActive: '1 day ago',
-    status: 'off-track' as const,
-    calorieTarget: 2500,
-    currentCalories: 1800,
-    protein: { consumed: 100, goal: 150 },
-    carbs: { consumed: 150, goal: 250 },
-    fat: { consumed: 50, goal: 80 },
-  },
-  {
-    id: '3',
-    name: 'Emma Wilson',
-    email: 'emma@example.com',
-    lastActive: '5 hours ago',
-    status: 'on-track' as const,
-    calorieTarget: 1800,
-    currentCalories: 1750,
-    protein: { consumed: 110, goal: 110 },
-    carbs: { consumed: 160, goal: 180 },
-    fat: { consumed: 65, goal: 60 },
-  },
-  {
-    id: '4',
-    name: 'Michael Brown',
-    email: 'michael@example.com',
-    lastActive: '3 hours ago',
-    status: 'new' as const,
-    calorieTarget: 2800,
-    currentCalories: 2600,
-    protein: { consumed: 180, goal: 175 },
-    carbs: { consumed: 300, goal: 280 },
-    fat: { consumed: 70, goal: 85 },
-  },
-];
+import { useAuth } from '@/context/AuthContext';
 
 // Mock meals for students
 const getMockMealsForStudent = (studentId: string): Meal[] => {
@@ -191,11 +140,37 @@ const getMockFeedbackForStudent = (studentId: string): FeedbackItem[] => {
 };
 
 const TrainerDashboard = () => {
-  const [selectedStudent, setSelectedStudent] = useState<typeof mockStudents[0] | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('students');
+  const [students, setStudents] = useState<any[]>([]);
   const macros = useMacros();
+  const { user, getAllStudents } = useAuth();
   
-  const handleStudentSelect = (student: typeof mockStudents[0]) => {
+  useEffect(() => {
+    if (user?.id) {
+      // Get students managed by this trainer
+      const managedStudents = getAllStudents(user.id);
+      
+      // Map to the format expected by StudentList
+      const mappedStudents = managedStudents.map(student => ({
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        lastActive: '2 hours ago', // In a real app, this would come from actual tracking
+        status: student.status || 'active',
+        calorieTarget: 2200, // In a real app, this would be stored per student
+        currentCalories: 1950, // In a real app, this would be calculated from meals
+        protein: { consumed: 120, goal: 135 },
+        carbs: { consumed: 180, goal: 220 },
+        fat: { consumed: 60, goal: 70 },
+        firstLogin: student.firstLogin,
+      }));
+      
+      setStudents(mappedStudents);
+    }
+  }, [user?.id, getAllStudents]);
+  
+  const handleStudentSelect = (student: typeof students[0]) => {
     setSelectedStudent(student);
   };
   
@@ -233,7 +208,7 @@ const TrainerDashboard = () => {
               />
             ) : (
               <StudentList 
-                students={mockStudents} 
+                students={students} 
                 onStudentSelect={handleStudentSelect}
               />
             )}

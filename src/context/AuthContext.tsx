@@ -2,12 +2,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type UserRole = 'student' | 'trainer';
+type StudentStatus = 'pending' | 'active' | 'inactive';
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  firstLogin?: boolean;
+  trainer?: string; // Trainer ID who manages this student (for student accounts)
+  status?: StudentStatus; // For student accounts
 }
 
 interface AuthContextType {
@@ -17,6 +21,13 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  addStudent: (name: string, tempPassword: string, trainerId: string) => Promise<{ username: string, password: string }>;
+  resetStudentPassword: (studentId: string) => Promise<string>;
+  toggleStudentStatus: (studentId: string, status: StudentStatus) => Promise<void>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  updateEmail: (email: string) => Promise<void>;
+  completeFirstLoginSetup: (email: string, newPassword: string) => Promise<void>;
+  getAllStudents: (trainerId: string) => User[];
 }
 
 // Mock user data for demonstration
@@ -27,6 +38,9 @@ const MOCK_USERS = [
     email: 'student@example.com',
     password: 'password123',
     role: 'student' as UserRole,
+    firstLogin: false,
+    trainer: '2',
+    status: 'active' as StudentStatus,
   },
   {
     id: '2',
@@ -35,13 +49,47 @@ const MOCK_USERS = [
     password: 'password123',
     role: 'trainer' as UserRole,
   },
+  {
+    id: '3',
+    name: 'Mike Johnson',
+    email: 'mike@example.com',
+    password: 'temppass',
+    role: 'student' as UserRole,
+    firstLogin: true,
+    trainer: '2',
+    status: 'pending' as StudentStatus,
+  },
+  {
+    id: '4',
+    name: 'Sara Williams',
+    email: 'sara@example.com',
+    password: 'password123',
+    role: 'student' as UserRole,
+    firstLogin: false,
+    trainer: '2',
+    status: 'inactive' as StudentStatus,
+  },
 ];
+
+// Helper function to generate a username based on the student's name
+const generateUsername = (name: string) => {
+  const nameParts = name.toLowerCase().split(' ');
+  const firstName = nameParts[0];
+  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+  const randomNum = Math.floor(Math.random() * 1000);
+  
+  if (lastName) {
+    return `${firstName.charAt(0)}${lastName}${randomNum}`;
+  }
+  return `${firstName}${randomNum}`;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mockUsers, setMockUsers] = useState(MOCK_USERS);
 
   useEffect(() => {
     // Check if user is already logged in (from localStorage)
@@ -58,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Simulate API request
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const mockUser = MOCK_USERS.find(u => 
+    const mockUser = mockUsers.find(u => 
       u.email.toLowerCase() === email.toLowerCase() && u.password === password
     );
     
@@ -80,22 +128,138 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Check if user already exists
-    if (MOCK_USERS.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+    if (mockUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
       setLoading(false);
       throw new Error('Email already in use');
     }
     
     // Create new user (in a real app this would be stored in a database)
     const newUser = {
-      id: `${MOCK_USERS.length + 1}`,
+      id: `${mockUsers.length + 1}`,
       name,
       email,
       role,
+      password,
+      firstLogin: false,
+      status: 'active' as StudentStatus,
     };
     
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    setMockUsers(prev => [...prev, newUser]);
+    
+    const { password: _, ...userWithoutPassword } = newUser;
+    setUser(userWithoutPassword);
+    localStorage.setItem('user', JSON.stringify(userWithoutPassword));
     setLoading(false);
+  };
+
+  const addStudent = async (name: string, tempPassword: string, trainerId: string) => {
+    // Simulate API request
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const username = generateUsername(name);
+    
+    // Create new student account
+    const newStudent = {
+      id: `${mockUsers.length + 1}`,
+      name,
+      email: username, // Using username as temporary email
+      password: tempPassword,
+      role: 'student' as UserRole,
+      firstLogin: true,
+      trainer: trainerId,
+      status: 'pending' as StudentStatus,
+    };
+    
+    setMockUsers(prev => [...prev, newStudent]);
+    
+    return { username, password: tempPassword };
+  };
+
+  const resetStudentPassword = async (studentId: string) => {
+    // Generate a temporary password
+    const tempPassword = `temp${Math.floor(Math.random() * 10000)}`;
+    
+    // Update the student's password
+    setMockUsers(prev => 
+      prev.map(user => 
+        user.id === studentId 
+          ? { ...user, password: tempPassword, firstLogin: true } 
+          : user
+      )
+    );
+    
+    return tempPassword;
+  };
+
+  const toggleStudentStatus = async (studentId: string, status: StudentStatus) => {
+    setMockUsers(prev => 
+      prev.map(user => 
+        user.id === studentId 
+          ? { ...user, status } 
+          : user
+      )
+    );
+  };
+
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user) throw new Error('No user logged in');
+    
+    // Verify current password
+    const currentUser = mockUsers.find(u => u.id === user.id);
+    if (!currentUser || currentUser.password !== currentPassword) {
+      throw new Error('Current password is incorrect');
+    }
+    
+    // Update password
+    setMockUsers(prev => 
+      prev.map(u => 
+        u.id === user.id 
+          ? { ...u, password: newPassword, firstLogin: false } 
+          : u
+      )
+    );
+  };
+
+  const updateEmail = async (email: string) => {
+    if (!user) throw new Error('No user logged in');
+    
+    // Update email
+    setMockUsers(prev => 
+      prev.map(u => 
+        u.id === user.id 
+          ? { ...u, email } 
+          : u
+      )
+    );
+    
+    // Update local user state
+    const updatedUser = { ...user, email };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  const completeFirstLoginSetup = async (email: string, newPassword: string) => {
+    if (!user) throw new Error('No user logged in');
+    
+    // Update user with new email and password, mark firstLogin as false
+    setMockUsers(prev => 
+      prev.map(u => 
+        u.id === user.id 
+          ? { ...u, email, password: newPassword, firstLogin: false, status: 'active' as StudentStatus } 
+          : u
+      )
+    );
+    
+    // Update local user state
+    const updatedUser = { ...user, email, firstLogin: false, status: 'active' as StudentStatus };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  const getAllStudents = (trainerId: string) => {
+    return mockUsers
+      .filter(user => user.role === 'student' && user.trainer === trainerId)
+      .map(({ password: _, ...user }) => user);
   };
 
   const logout = () => {
@@ -110,7 +274,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       signup, 
       logout,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      addStudent,
+      resetStudentPassword,
+      toggleStudentStatus,
+      updatePassword,
+      updateEmail,
+      completeFirstLoginSetup,
+      getAllStudents
     }}>
       {children}
     </AuthContext.Provider>

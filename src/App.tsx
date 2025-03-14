@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import TrainerDashboard from "./pages/TrainerDashboard";
+import FirstLoginSetup from "./components/FirstLoginSetup";
 
 // Layout
 import Header from "./components/layout/Header";
@@ -37,6 +38,15 @@ const ProtectedRoute = ({
   
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
+  }
+  
+  // Check if it's first login for students
+  if (user?.firstLogin && user.role === 'student') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gray-50">
+        <FirstLoginSetup />
+      </div>
+    );
   }
   
   // Check if user has required role
