@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Meal } from '@/components/MealLogger';
+import { generateId } from '@/utils/dataUtils';
 
 interface MacroData {
   calories: {
@@ -21,10 +22,22 @@ interface MacroData {
   };
 }
 
+export interface FeedbackItem {
+  id: string;
+  trainerId: string;
+  trainerName: string;
+  trainerAvatar?: string;
+  message: string;
+  date: Date;
+}
+
 interface UseMacrosReturn extends MacroData {
   meals: Meal[];
   addMeal: (meal: Meal) => void;
   resetMeals: () => void;
+  deleteMeal: (mealId: string) => void;
+  updateMeal: (updatedMeal: Meal) => void;
+  trainerFeedback: FeedbackItem[];
 }
 
 // Default goals based on a standard diet
@@ -37,6 +50,7 @@ const DEFAULT_GOALS = {
 
 export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacrosReturn {
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [trainerFeedback, setTrainerFeedback] = useState<FeedbackItem[]>([]);
   
   // Merge custom goals with defaults
   const goals = {
@@ -67,6 +81,16 @@ export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacro
     setMeals([]);
   };
 
+  const deleteMeal = (mealId: string) => {
+    setMeals((prevMeals) => prevMeals.filter(meal => meal.id !== mealId));
+  };
+
+  const updateMeal = (updatedMeal: Meal) => {
+    setMeals((prevMeals) => 
+      prevMeals.map(meal => meal.id === updatedMeal.id ? updatedMeal : meal)
+    );
+  };
+
   // Example pre-populated meals for demo purposes
   useEffect(() => {
     // Only add example meals if there are none
@@ -94,6 +118,26 @@ export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacro
         },
       ]);
     }
+
+    // Add example trainer feedback
+    if (trainerFeedback.length === 0) {
+      setTrainerFeedback([
+        {
+          id: generateId(),
+          trainerId: 'trainer1',
+          trainerName: 'Sarah Johnson',
+          message: 'Great job meeting your protein goals this week! Consider adding more complex carbs for sustained energy during your workouts.',
+          date: new Date(new Date().setDate(new Date().getDate() - 2)),
+        },
+        {
+          id: generateId(),
+          trainerId: 'trainer1',
+          trainerName: 'Sarah Johnson',
+          message: 'I notice you\'ve been skipping breakfast. Try a quick protein shake to start your day!',
+          date: new Date(),
+        }
+      ]);
+    }
   }, []);
 
   const consumed = calculateConsumed();
@@ -102,6 +146,9 @@ export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacro
     meals,
     addMeal,
     resetMeals,
+    deleteMeal,
+    updateMeal,
+    trainerFeedback,
     calories: {
       consumed: consumed.calories,
       goal: goals.calories,
