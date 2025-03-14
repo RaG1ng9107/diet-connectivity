@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,15 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { generateId } from '@/utils/dataUtils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Activity } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { SearchIcon } from 'lucide-react';
+import { FoodItem, mockFoodDatabase, calculateNutrition } from '@/data/foodDatabase';
+import { Badge } from '@/components/ui/badge';
 
 export interface Meal {
   id: string;
-  name: string;
+  foodItemId: string;
+  foodItemName: string;
+  quantity: number;
+  servingUnit: 'g' | 'ml' | 'serving';
   calories: number;
   protein: number;
   carbs: number;
@@ -31,39 +35,69 @@ interface MealLoggerProps {
 
 const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fat, setFat] = useState('');
+  const [selectedFoodId, setSelectedFoodId] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [mealType, setMealType] = useState('');
   const [date, setDate] = useState<Date>(new Date());
-  const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState('g');
+  const [calculatedNutrition, setCalculatedNutrition] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0
+  });
   const { toast } = useToast();
 
   const resetForm = () => {
-    setName('');
-    setCalories('');
-    setProtein('');
-    setCarbs('');
-    setFat('');
+    setSelectedFoodId('');
+    setQuantity('');
     setMealType('');
     setDate(new Date());
-    setQuantity('');
-    setUnit('g');
+    setCalculatedNutrition({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0
+    });
   };
+
+  // Calculate nutrition when food or quantity changes
+  useEffect(() => {
+    if (selectedFoodId && quantity) {
+      const foodItem = mockFoodDatabase.find(item => item.id === selectedFoodId);
+      if (foodItem) {
+        const nutrition = calculateNutrition(foodItem, Number(quantity));
+        setCalculatedNutrition(nutrition);
+      }
+    } else {
+      setCalculatedNutrition({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+    }
+  }, [selectedFoodId, quantity]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!selectedFoodId || !quantity || !mealType) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill out all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const foodItem = mockFoodDatabase.find(item => item.id === selectedFoodId);
+    if (!foodItem) return;
+    
     const newMeal: Meal = {
       id: generateId(),
-      name,
-      calories: Number(calories),
-      protein: Number(protein),
-      carbs: Number(carbs),
-      fat: Number(fat),
+      foodItemId: selectedFoodId,
+      foodItemName: foodItem.name,
+      quantity: Number(quantity),
+      servingUnit: foodItem.servingUnit,
+      calories: calculatedNutrition.calories,
+      protein: calculatedNutrition.protein,
+      carbs: calculatedNutrition.carbs,
+      fat: calculatedNutrition.fat,
       mealType,
       timestamp: date,
     };
@@ -71,7 +105,7 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
     onAddMeal(newMeal);
     toast({
       title: 'Meal Added',
-      description: `${name} has been added to your log.`,
+      description: `${foodItem.name} has been added to your log.`,
     });
     
     resetForm();
@@ -92,21 +126,6 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="name">Meal Name</Label>
-                <div className="relative mt-1">
-                  <Input 
-                    id="name" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    required 
-                    placeholder="e.g., Chicken Salad"
-                    className="pl-8"
-                  />
-                  <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-              
               <div>
                 <Label htmlFor="mealDate">Date</Label>
                 <Popover>
@@ -148,9 +167,48 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
                 </Select>
               </div>
               
-              <div className="col-span-2 grid grid-cols-3 gap-2 items-end">
-                <div className="col-span-2">
-                  <Label htmlFor="quantity">Quantity</Label>
+              <div className="col-span-2">
+                <Label htmlFor="foodItem">Food Item</Label>
+                <Select value={selectedFoodId} onValueChange={setSelectedFoodId} required>
+                  <SelectTrigger id="foodItem" className="mt-1">
+                    <SelectValue placeholder="Select from approved food list" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <div className="flex flex-col gap-1 py-1 px-2">
+                      {mockFoodDatabase.map((food) => (
+                        <SelectItem key={food.id} value={food.id} className="flex items-center">
+                          <div className="flex flex-col">
+                            <span>{food.name}</span>
+                            <div className="flex gap-1 mt-1">
+                              <Badge variant="outline" className="text-xs bg-primary/10">
+                                {food.caloriesPer100g} kcal/100g
+                              </Badge>
+                              <Badge variant="outline" className="text-xs bg-primary/10">
+                                P: {food.proteinPer100g}g
+                              </Badge>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </div>
+                  </SelectContent>
+                </Select>
+                
+                {selectedFoodId && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {mockFoodDatabase.find(f => f.id === selectedFoodId)?.trainerNotes && (
+                      <p className="italic">
+                        <span className="font-medium">Trainer note:</span> {mockFoodDatabase.find(f => f.id === selectedFoodId)?.trainerNotes}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="col-span-2 grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="quantity">Quantity ({selectedFoodId ? 
+                    mockFoodDatabase.find(f => f.id === selectedFoodId)?.servingUnit : 'g'})</Label>
                   <Input 
                     id="quantity" 
                     type="number" 
@@ -161,72 +219,30 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
                     className="mt-1"
                     placeholder="Amount"
                   />
+                  {selectedFoodId && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Recommended: {mockFoodDatabase.find(f => f.id === selectedFoodId)?.recommendedServing}
+                      {mockFoodDatabase.find(f => f.id === selectedFoodId)?.servingUnit}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <Select value={unit} onValueChange={setUnit}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="g">grams</SelectItem>
-                      <SelectItem value="ml">ml</SelectItem>
-                      <SelectItem value="serving">serving</SelectItem>
-                      <SelectItem value="oz">oz</SelectItem>
-                    </SelectContent>
-                  </Select>
+                
+                <div className="border rounded-md p-3 flex flex-col justify-center">
+                  <div className="flex items-center mb-1">
+                    <Activity className="h-4 w-4 mr-1 text-primary" />
+                    <span className="font-medium text-sm">Calculated Nutrition:</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-sm">
+                    <span>Calories:</span>
+                    <span className="font-mono">{calculatedNutrition.calories} kcal</span>
+                    <span>Protein:</span>
+                    <span className="font-mono">{calculatedNutrition.protein}g</span>
+                    <span>Carbs:</span>
+                    <span className="font-mono">{calculatedNutrition.carbs}g</span>
+                    <span>Fat:</span>
+                    <span className="font-mono">{calculatedNutrition.fat}g</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="col-span-2">
-                <Label htmlFor="calories">Calories</Label>
-                <Input 
-                  id="calories" 
-                  type="number" 
-                  value={calories} 
-                  onChange={(e) => setCalories(e.target.value)} 
-                  required 
-                  min="0"
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="protein">Protein (g)</Label>
-                <Input 
-                  id="protein" 
-                  type="number" 
-                  value={protein} 
-                  onChange={(e) => setProtein(e.target.value)} 
-                  required 
-                  min="0"
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="carbs">Carbs (g)</Label>
-                <Input 
-                  id="carbs" 
-                  type="number" 
-                  value={carbs} 
-                  onChange={(e) => setCarbs(e.target.value)} 
-                  required 
-                  min="0"
-                  className="mt-1"
-                />
-              </div>
-              
-              <div className="col-span-2">
-                <Label htmlFor="fat">Fat (g)</Label>
-                <Input 
-                  id="fat" 
-                  type="number" 
-                  value={fat} 
-                  onChange={(e) => setFat(e.target.value)} 
-                  required 
-                  min="0"
-                  className="mt-1"
-                />
               </div>
             </div>
             

@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Meal } from '@/components/MealLogger';
+import { format } from 'date-fns';
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -33,7 +34,7 @@ const Dashboard = () => {
     macros.addMeal(meal);
     toast({
       title: "Meal added",
-      description: `${meal.name} has been logged successfully.`,
+      description: `${meal.foodItemName} has been logged successfully.`,
     });
   };
   
@@ -97,9 +98,9 @@ const Dashboard = () => {
                             className="flex justify-between items-start border-b pb-3 last:border-0"
                           >
                             <div>
-                              <h4 className="font-medium">{meal.name}</h4>
+                              <h4 className="font-medium">{meal.foodItemName}</h4>
                               <div className="text-sm text-muted-foreground">
-                                {meal.mealType} • {meal.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                <span className="capitalize">{meal.mealType}</span> • {format(meal.timestamp, 'h:mm a')} • {meal.quantity}{meal.servingUnit}
                               </div>
                             </div>
                             <div className="flex items-center space-x-4">
@@ -121,7 +122,7 @@ const Dashboard = () => {
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
-                                  onClick={() => handleDeleteMeal(meal.id, meal.name)}
+                                  onClick={() => handleDeleteMeal(meal.id, meal.foodItemName)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   <span className="sr-only">Delete</span>

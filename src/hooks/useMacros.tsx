@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Meal } from '@/components/MealLogger';
 import { generateId } from '@/utils/dataUtils';
+import { FoodItem, mockFoodDatabase } from '@/data/foodDatabase';
 
 interface MacroData {
   calories: {
@@ -27,6 +28,7 @@ export interface FeedbackItem {
   trainerId: string;
   trainerName: string;
   trainerAvatar?: string;
+  studentId?: string; // For trainer to specify which student the feedback is for
   message: string;
   date: Date;
 }
@@ -38,6 +40,11 @@ interface UseMacrosReturn extends MacroData {
   deleteMeal: (mealId: string) => void;
   updateMeal: (updatedMeal: Meal) => void;
   trainerFeedback: FeedbackItem[];
+  foodDatabase: FoodItem[];
+  addFoodItem: (food: FoodItem) => void;
+  deleteFoodItem: (foodId: string) => void;
+  updateFoodItem: (updatedFood: FoodItem) => void;
+  addFeedback: (feedback: FeedbackItem) => void;
 }
 
 // Default goals based on a standard diet
@@ -51,6 +58,7 @@ const DEFAULT_GOALS = {
 export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacrosReturn {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [trainerFeedback, setTrainerFeedback] = useState<FeedbackItem[]>([]);
+  const [foodDatabase, setFoodDatabase] = useState<FoodItem[]>(mockFoodDatabase);
   
   // Merge custom goals with defaults
   const goals = {
@@ -90,6 +98,24 @@ export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacro
       prevMeals.map(meal => meal.id === updatedMeal.id ? updatedMeal : meal)
     );
   };
+  
+  const addFoodItem = (food: FoodItem) => {
+    setFoodDatabase((prevFoods) => [...prevFoods, food]);
+  };
+  
+  const deleteFoodItem = (foodId: string) => {
+    setFoodDatabase((prevFoods) => prevFoods.filter(food => food.id !== foodId));
+  };
+  
+  const updateFoodItem = (updatedFood: FoodItem) => {
+    setFoodDatabase((prevFoods) => 
+      prevFoods.map(food => food.id === updatedFood.id ? updatedFood : food)
+    );
+  };
+  
+  const addFeedback = (feedback: FeedbackItem) => {
+    setTrainerFeedback((prevFeedback) => [feedback, ...prevFeedback]);
+  };
 
   // Example pre-populated meals for demo purposes
   useEffect(() => {
@@ -98,23 +124,29 @@ export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacro
       setMeals([
         {
           id: '1',
-          name: 'Breakfast Oatmeal',
-          calories: 350,
-          protein: 15,
-          carbs: 60,
-          fat: 8,
-          mealType: 'breakfast',
-          timestamp: new Date(new Date().setHours(8, 30)),
+          foodItemId: '1',
+          foodItemName: 'Grilled Chicken Breast',
+          quantity: 150,
+          servingUnit: 'g',
+          calories: 248,
+          protein: 46.5,
+          carbs: 0,
+          fat: 5.4,
+          mealType: 'lunch',
+          timestamp: new Date(new Date().setHours(13, 0)),
         },
         {
           id: '2',
-          name: 'Grilled Chicken Salad',
-          calories: 450,
-          protein: 40,
-          carbs: 20,
-          fat: 15,
-          mealType: 'lunch',
-          timestamp: new Date(new Date().setHours(13, 0)),
+          foodItemId: '6',
+          foodItemName: 'Greek Yogurt',
+          quantity: 200,
+          servingUnit: 'g',
+          calories: 118,
+          protein: 20,
+          carbs: 7.2,
+          fat: 0.8,
+          mealType: 'breakfast',
+          timestamp: new Date(new Date().setHours(8, 30)),
         },
       ]);
     }
@@ -149,6 +181,11 @@ export function useMacros(customGoals?: Partial<typeof DEFAULT_GOALS>): UseMacro
     deleteMeal,
     updateMeal,
     trainerFeedback,
+    foodDatabase,
+    addFoodItem,
+    deleteFoodItem,
+    updateFoodItem,
+    addFeedback,
     calories: {
       consumed: consumed.calories,
       goal: goals.calories,
