@@ -19,16 +19,19 @@ import AddStudentForm from './AddStudentForm';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+type AccountStatus = 'pending' | 'active' | 'inactive';
+type DietaryStatus = 'on-track' | 'off-track' | 'new';
+
 interface Student {
   id: string;
   name: string;
   avatar?: string;
   email: string;
   lastActive: string;
-  status: 'on-track' | 'off-track' | 'new';
+  accountStatus?: AccountStatus;
+  dietaryStatus?: DietaryStatus;
   calorieTarget: number;
   currentCalories: number;
-  status?: 'pending' | 'active' | 'inactive';
   firstLogin?: boolean;
 }
 
@@ -50,26 +53,26 @@ const StudentList: React.FC<StudentListProps> = ({ students, onStudentSelect }) 
   
   const getStatusBadge = (student: Student) => {
     // Check for account status first (if available)
-    if (student.status === 'pending') {
+    if (student.accountStatus === 'pending') {
       return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">First Login Pending</Badge>;
-    } else if (student.status === 'inactive') {
+    } else if (student.accountStatus === 'inactive') {
       return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Inactive</Badge>;
-    } else if (student.status === 'active') {
-      if (student.status === 'on-track') {
+    } else if (student.accountStatus === 'active') {
+      if (student.dietaryStatus === 'on-track') {
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">On Track</Badge>;
-      } else if (student.status === 'off-track') {
+      } else if (student.dietaryStatus === 'off-track') {
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Off Track</Badge>;
-      } else if (student.status === 'new') {
+      } else if (student.dietaryStatus === 'new') {
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">New</Badge>;
       }
     }
     
-    // Fall back to the original status if account status is not available
-    if (student.status === 'on-track') {
+    // Fall back to the dietary status if account status is not available
+    if (student.dietaryStatus === 'on-track') {
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">On Track</Badge>;
-    } else if (student.status === 'off-track') {
+    } else if (student.dietaryStatus === 'off-track') {
       return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Off Track</Badge>;
-    } else if (student.status === 'new') {
+    } else if (student.dietaryStatus === 'new') {
       return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">New</Badge>;
     }
     
@@ -77,11 +80,11 @@ const StudentList: React.FC<StudentListProps> = ({ students, onStudentSelect }) 
   };
   
   const getStatusIcon = (student: Student) => {
-    if (student.status === 'pending') {
+    if (student.accountStatus === 'pending') {
       return <Clock className="h-4 w-4 text-amber-500" />;
-    } else if (student.status === 'inactive') {
+    } else if (student.accountStatus === 'inactive') {
       return <XCircle className="h-4 w-4 text-red-500" />;
-    } else if (student.status === 'active') {
+    } else if (student.accountStatus === 'active') {
       return <CheckCircle2 className="h-4 w-4 text-green-500" />;
     }
     return null;
@@ -126,7 +129,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onStudentSelect }) 
     }
   };
   
-  const handleToggleStatus = async (studentId: string, currentStatus: string, studentName: string, e: React.MouseEvent) => {
+  const handleToggleStatus = async (studentId: string, currentStatus: AccountStatus | undefined, studentName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
     const newStatus = currentStatus === 'inactive' ? 'active' : 'inactive';
@@ -219,14 +222,14 @@ const StudentList: React.FC<StudentListProps> = ({ students, onStudentSelect }) 
                       >
                         Reset PW
                       </Button>
-                      {student.status !== 'pending' && (
+                      {student.accountStatus !== 'pending' && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className={`hidden sm:flex h-8 ${student.status === 'inactive' ? 'text-green-600' : 'text-red-600'}`}
-                          onClick={(e) => handleToggleStatus(student.id, student.status || 'active', student.name, e)}
+                          className={`hidden sm:flex h-8 ${student.accountStatus === 'inactive' ? 'text-green-600' : 'text-red-600'}`}
+                          onClick={(e) => handleToggleStatus(student.id, student.accountStatus, student.name, e)}
                         >
-                          {student.status === 'inactive' ? 'Activate' : 'Deactivate'}
+                          {student.accountStatus === 'inactive' ? 'Activate' : 'Deactivate'}
                         </Button>
                       )}
                     </div>

@@ -157,7 +157,8 @@ const TrainerDashboard = () => {
         name: student.name,
         email: student.email,
         lastActive: '2 hours ago', // In a real app, this would come from actual tracking
-        status: student.status || 'active',
+        accountStatus: student.status || 'active',
+        dietaryStatus: 'on-track', // This would come from actual tracking in a real app
         calorieTarget: 2200, // In a real app, this would be stored per student
         currentCalories: 1950, // In a real app, this would be calculated from meals
         protein: { consumed: 120, goal: 135 },

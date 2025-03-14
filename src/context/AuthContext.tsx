@@ -30,44 +30,56 @@ interface AuthContextType {
   getAllStudents: (trainerId: string) => User[];
 }
 
+// Define a more comprehensive user type for internal use
+interface MockUser {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  firstLogin?: boolean;
+  trainer?: string;
+  status?: StudentStatus;
+}
+
 // Mock user data for demonstration
-const MOCK_USERS = [
+const MOCK_USERS: MockUser[] = [
   {
     id: '1',
     name: 'John Student',
     email: 'student@example.com',
     password: 'password123',
-    role: 'student' as UserRole,
+    role: 'student',
     firstLogin: false,
     trainer: '2',
-    status: 'active' as StudentStatus,
+    status: 'active',
   },
   {
     id: '2',
     name: 'Jane Trainer',
     email: 'trainer@example.com',
     password: 'password123',
-    role: 'trainer' as UserRole,
+    role: 'trainer',
   },
   {
     id: '3',
     name: 'Mike Johnson',
     email: 'mike@example.com',
     password: 'temppass',
-    role: 'student' as UserRole,
+    role: 'student',
     firstLogin: true,
     trainer: '2',
-    status: 'pending' as StudentStatus,
+    status: 'pending',
   },
   {
     id: '4',
     name: 'Sara Williams',
     email: 'sara@example.com',
     password: 'password123',
-    role: 'student' as UserRole,
+    role: 'student',
     firstLogin: false,
     trainer: '2',
-    status: 'inactive' as StudentStatus,
+    status: 'inactive',
   },
 ];
 
@@ -89,7 +101,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mockUsers, setMockUsers] = useState(MOCK_USERS);
+  const [mockUsers, setMockUsers] = useState<MockUser[]>(MOCK_USERS);
 
   useEffect(() => {
     // Check if user is already logged in (from localStorage)
@@ -134,14 +146,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Create new user (in a real app this would be stored in a database)
-    const newUser = {
+    const newUser: MockUser = {
       id: `${mockUsers.length + 1}`,
       name,
       email,
       role,
       password,
       firstLogin: false,
-      status: 'active' as StudentStatus,
+      status: role === 'student' ? 'active' as StudentStatus : undefined,
+      trainer: role === 'student' ? '' : undefined, // Empty trainer for now
     };
     
     setMockUsers(prev => [...prev, newUser]);
@@ -159,15 +172,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const username = generateUsername(name);
     
     // Create new student account
-    const newStudent = {
+    const newStudent: MockUser = {
       id: `${mockUsers.length + 1}`,
       name,
       email: username, // Using username as temporary email
       password: tempPassword,
-      role: 'student' as UserRole,
+      role: 'student',
       firstLogin: true,
       trainer: trainerId,
-      status: 'pending' as StudentStatus,
+      status: 'pending',
     };
     
     setMockUsers(prev => [...prev, newStudent]);
