@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserProfile from '@/components/UserProfile';
@@ -153,19 +152,17 @@ const TrainerDashboard = () => {
   
   useEffect(() => {
     if (user?.id) {
-      // Get students managed by this trainer
       const managedStudents = getAllStudents(user.id);
       
-      // Map to the format expected by StudentList
       const mappedStudents = managedStudents.map(student => ({
         id: student.id,
         name: student.name,
         email: student.email,
-        lastActive: '2 hours ago', // In a real app, this would come from actual tracking
+        lastActive: '2 hours ago',
         accountStatus: student.status || 'active',
-        dietaryStatus: 'on-track', // This would come from actual tracking in a real app
+        dietaryStatus: 'on-track',
         calorieTarget: student.studentDetails?.macroGoals?.calories || 2200,
-        currentCalories: 1950, // In a real app, this would be calculated from meals
+        currentCalories: 1950,
         protein: { 
           consumed: 120, 
           goal: student.studentDetails?.macroGoals?.protein || 135 
@@ -188,7 +185,6 @@ const TrainerDashboard = () => {
     }
   }, [user?.id, getAllStudents]);
 
-  // Fetch food items from Supabase
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
@@ -202,7 +198,6 @@ const TrainerDashboard = () => {
         }
         
         if (data) {
-          // Transform the data from Supabase to match our FoodItem type
           const transformedData: FoodItem[] = data.map(item => ({
             id: item.id,
             name: item.name,
@@ -245,10 +240,8 @@ const TrainerDashboard = () => {
     macros.addFeedback(feedback);
   };
 
-  // Handler to add food items
   const handleAddFood = async (food: FoodItem) => {
     try {
-      // Insert the new food item into Supabase
       const { data, error } = await supabase
         .from('food_items')
         .insert({
@@ -269,7 +262,6 @@ const TrainerDashboard = () => {
         throw error;
       }
       
-      // Add to local state for immediate UI update
       if (data) {
         const newFood: FoodItem = {
           id: data[0].id,
@@ -301,10 +293,8 @@ const TrainerDashboard = () => {
     }
   };
   
-  // Handler to delete food items
   const handleDeleteFood = async (foodId: string) => {
     try {
-      // Delete the food item from Supabase
       const { error } = await supabase
         .from('food_items')
         .delete()
@@ -314,7 +304,6 @@ const TrainerDashboard = () => {
         throw error;
       }
       
-      // Remove from local state for immediate UI update
       setFoodItems(prevFoods => prevFoods.filter(food => food.id !== foodId));
       
       toast({
