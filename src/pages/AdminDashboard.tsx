@@ -42,8 +42,9 @@ const AdminDashboard = () => {
             proteinPer100g: parseFloat(item.protein_per_100g),
             carbsPer100g: parseFloat(item.carbs_per_100g),
             fatPer100g: parseFloat(item.fat_per_100g),
-            servingSize: item.recommended_serving || 100,
+            recommendedServing: item.recommended_serving || 100,
             servingUnit: item.serving_unit || 'g',
+            trainerNotes: item.trainer_notes,
           }));
           
           setFoodItems(transformedData);
@@ -73,11 +74,12 @@ const AdminDashboard = () => {
           name: food.name,
           category: food.category,
           calories_per_100g: food.caloriesPer100g,
-          protein_per_100g: food.proteinPer100g,
-          carbs_per_100g: food.carbsPer100g,
-          fat_per_100g: food.fatPer100g,
-          recommended_serving: food.servingSize,
+          protein_per_100g: food.proteinPer100g.toString(),
+          carbs_per_100g: food.carbsPer100g.toString(),
+          fat_per_100g: food.fatPer100g.toString(),
+          recommended_serving: food.recommendedServing,
           serving_unit: food.servingUnit,
+          trainer_notes: food.trainerNotes,
           created_by: user?.id
         })
         .select();
@@ -96,8 +98,9 @@ const AdminDashboard = () => {
           proteinPer100g: parseFloat(data[0].protein_per_100g),
           carbsPer100g: parseFloat(data[0].carbs_per_100g),
           fatPer100g: parseFloat(data[0].fat_per_100g),
-          servingSize: data[0].recommended_serving || 100,
+          recommendedServing: data[0].recommended_serving || 100,
           servingUnit: data[0].serving_unit || 'g',
+          trainerNotes: data[0].trainer_notes,
         };
         
         setFoodItems(prevFoods => [...prevFoods, newFood]);
