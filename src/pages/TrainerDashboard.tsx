@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { FoodItem } from '@/data/foodDatabase';
 
-// Mock meals for students
 const getMockMealsForStudent = (studentId: string): Meal[] => {
   if (studentId === '1') {
     return [
@@ -93,7 +92,6 @@ const getMockMealsForStudent = (studentId: string): Meal[] => {
   return [];
 };
 
-// Mock feedback for students
 const getMockFeedbackForStudent = (studentId: string): FeedbackItem[] => {
   if (studentId === '1') {
     return [

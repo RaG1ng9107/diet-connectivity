@@ -49,7 +49,6 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Fetch food items from Supabase
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
@@ -63,7 +62,6 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
         }
         
         if (data) {
-          // Transform the data from Supabase to match our FoodItem type
           const transformedData: FoodItem[] = data.map(item => ({
             id: item.id,
             name: item.name,
@@ -107,7 +105,6 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
     });
   };
 
-  // Calculate nutrition when food or quantity changes
   useEffect(() => {
     if (selectedFoodId && quantity) {
       const foodItem = foodItems.find(item => item.id === selectedFoodId);
