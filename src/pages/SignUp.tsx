@@ -14,7 +14,7 @@ const SignUp = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'student' | 'trainer'>('student');
+  const [role, setRole] = useState<'student' | 'trainer' | 'admin'>('student');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const { toast } = useToast();
@@ -105,7 +105,7 @@ const SignUp = () => {
                 <Label>Account Type</Label>
                 <RadioGroup 
                   value={role} 
-                  onValueChange={(value) => setRole(value as 'student' | 'trainer')}
+                  onValueChange={(value) => setRole(value as 'student' | 'trainer' | 'admin')}
                   className="mt-2 flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
@@ -115,6 +115,10 @@ const SignUp = () => {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="trainer" id="trainer" />
                     <Label htmlFor="trainer" className="font-normal">Trainer</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="admin" id="admin" />
+                    <Label htmlFor="admin" className="font-normal">Admin</Label>
                   </div>
                 </RadioGroup>
               </div>

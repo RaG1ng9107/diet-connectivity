@@ -1,8 +1,23 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type UserRole = 'student' | 'trainer';
+type UserRole = 'student' | 'trainer' | 'admin';
 type StudentStatus = 'pending' | 'active' | 'inactive';
+type DietaryPreference = 'standard' | 'vegetarian' | 'vegan' | 'keto' | 'paleo' | 'other';
+type PersonalGoal = 'weight-loss' | 'muscle-gain' | 'maintenance' | 'general-health' | 'performance';
+
+interface MacroGoals {
+  calories: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+}
+
+interface StudentDetails {
+  age?: number;
+  dietaryPreference?: DietaryPreference;
+  personalGoal?: PersonalGoal;
+  macroGoals?: MacroGoals;
+}
 
 interface User {
   id: string;
@@ -12,6 +27,7 @@ interface User {
   firstLogin?: boolean;
   trainer?: string; // Trainer ID who manages this student (for student accounts)
   status?: StudentStatus; // For student accounts
+  studentDetails?: StudentDetails; // Additional student details
 }
 
 interface AuthContextType {
@@ -21,13 +37,15 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
-  addStudent: (name: string, tempPassword: string, trainerId: string) => Promise<{ username: string, password: string }>;
+  addStudent: (name: string, tempPassword: string, trainerId: string, studentDetails: StudentDetails) => Promise<{ username: string, password: string }>;
   resetStudentPassword: (studentId: string) => Promise<string>;
   toggleStudentStatus: (studentId: string, status: StudentStatus) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
   completeFirstLoginSetup: (email: string, newPassword: string) => Promise<void>;
   getAllStudents: (trainerId: string) => User[];
+  getAllTrainers: () => User[];
+  updateStudentDetails: (studentId: string, details: Partial<StudentDetails>) => Promise<void>;
 }
 
 // Define a more comprehensive user type for internal use
@@ -40,6 +58,7 @@ interface MockUser {
   firstLogin?: boolean;
   trainer?: string;
   status?: StudentStatus;
+  studentDetails?: StudentDetails;
 }
 
 // Mock user data for demonstration
@@ -53,6 +72,17 @@ const MOCK_USERS: MockUser[] = [
     firstLogin: false,
     trainer: '2',
     status: 'active',
+    studentDetails: {
+      age: 28,
+      dietaryPreference: 'standard',
+      personalGoal: 'weight-loss',
+      macroGoals: {
+        calories: 2000,
+        protein: 150,
+        carbs: 200,
+        fat: 65
+      }
+    }
   },
   {
     id: '2',
@@ -80,6 +110,24 @@ const MOCK_USERS: MockUser[] = [
     firstLogin: false,
     trainer: '2',
     status: 'inactive',
+    studentDetails: {
+      age: 35,
+      dietaryPreference: 'vegetarian',
+      personalGoal: 'maintenance',
+      macroGoals: {
+        calories: 1800,
+        protein: 120,
+        carbs: 180,
+        fat: 60
+      }
+    }
+  },
+  {
+    id: '5',
+    name: 'Admin User',
+    email: 'admin@example.com',
+    password: 'admin123',
+    role: 'admin',
   },
 ];
 
@@ -165,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   };
 
-  const addStudent = async (name: string, tempPassword: string, trainerId: string) => {
+  const addStudent = async (name: string, tempPassword: string, trainerId: string, studentDetails: StudentDetails) => {
     // Simulate API request
     await new Promise(resolve => setTimeout(resolve, 800));
     
@@ -181,6 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       firstLogin: true,
       trainer: trainerId,
       status: 'pending',
+      studentDetails
     };
     
     setMockUsers(prev => [...prev, newStudent]);
@@ -271,8 +320,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getAllStudents = (trainerId: string) => {
     return mockUsers
-      .filter(user => user.role === 'student' && user.trainer === trainerId)
+      .filter(user => user.role === 'student' && (trainerId === 'all' || user.trainer === trainerId))
       .map(({ password: _, ...user }) => user);
+  };
+  
+  const getAllTrainers = () => {
+    return mockUsers
+      .filter(user => user.role === 'trainer')
+      .map(({ password: _, ...user }) => user);
+  };
+  
+  const updateStudentDetails = async (studentId: string, details: Partial<StudentDetails>) => {
+    setMockUsers(prev => 
+      prev.map(user => 
+        user.id === studentId 
+          ? { 
+              ...user, 
+              studentDetails: { 
+                ...user.studentDetails || {}, 
+                ...details 
+              } 
+            } 
+          : user
+      )
+    );
   };
 
   const logout = () => {
@@ -294,7 +365,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updatePassword,
       updateEmail,
       completeFirstLoginSetup,
-      getAllStudents
+      getAllStudents,
+      getAllTrainers,
+      updateStudentDetails
     }}>
       {children}
     </AuthContext.Provider>

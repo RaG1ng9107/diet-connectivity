@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserProfile from '@/components/UserProfile';
 import PageTransition from '@/components/layout/PageTransition';
@@ -12,8 +12,10 @@ import ProgressChart from '@/components/ProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Target, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -27,11 +29,28 @@ import { format } from 'date-fns';
 const Dashboard = () => {
   const { toast } = useToast();
   const macros = useMacros();
+  const { user } = useAuth();
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
+  // Get personalized macro goals if available in user's studentDetails
+  const personalizedGoals = user?.studentDetails?.macroGoals || {
+    calories: 2000,
+    protein: 140,
+    carbs: 220,
+    fat: 60
+  };
+  
+  // Override the default goals with personalized goals
+  const customMacros = useMacros({
+    calories: personalizedGoals.calories,
+    protein: personalizedGoals.protein || 140,
+    carbs: personalizedGoals.carbs || 220,
+    fat: personalizedGoals.fat || 60
+  });
+  
   const handleAddMeal = (meal: Meal) => {
-    macros.addMeal(meal);
+    customMacros.addMeal(meal);
     toast({
       title: "Meal added",
       description: `${meal.foodItemName} has been logged successfully.`,
@@ -39,7 +58,7 @@ const Dashboard = () => {
   };
   
   const handleDeleteMeal = (mealId: string, mealName: string) => {
-    macros.deleteMeal(mealId);
+    customMacros.deleteMeal(mealId);
     toast({
       title: "Meal deleted",
       description: `${mealName} has been removed from your log.`,
@@ -50,6 +69,15 @@ const Dashboard = () => {
   const handleEditMeal = (meal: Meal) => {
     setSelectedMeal(meal);
     setIsEditDialogOpen(true);
+  };
+
+  const formatGoal = (goal?: string) => {
+    if (!goal) return 'Not specified';
+    
+    return goal
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
   
   return (
@@ -62,23 +90,81 @@ const Dashboard = () => {
         </div>
         
         <div className="grid gap-6 md:grid-cols-2 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Your Goals & Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium mb-1">Age</p>
+                    <p>{user?.studentDetails?.age || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-1">Goal</p>
+                    <p>{formatGoal(user?.studentDetails?.personalGoal)}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium mb-1">Dietary Preference</p>
+                  <Badge variant="outline" className="bg-primary/10">
+                    {user?.studentDetails?.dietaryPreference 
+                      ? user.studentDetails.dietaryPreference.charAt(0).toUpperCase() + user.studentDetails.dietaryPreference.slice(1)
+                      : 'Not specified'}
+                  </Badge>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium mb-1">Daily Targets</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-sm">
+                      <p className="font-medium">Calories</p>
+                      <p>{personalizedGoals.calories} kcal</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium">Protein</p>
+                      <p>{personalizedGoals.protein || 'Not set'} g</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium">Carbs</p>
+                      <p>{personalizedGoals.carbs || 'Not set'} g</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium">Fat</p>
+                      <p>{personalizedGoals.fat || 'Not set'} g</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
           <MacroTracker
-            calories={macros.calories}
-            protein={macros.protein}
-            carbs={macros.carbs}
-            fat={macros.fat}
-          />
-          <MacroPieChart
-            protein={macros.protein.consumed}
-            carbs={macros.carbs.consumed}
-            fat={macros.fat.consumed}
+            calories={customMacros.calories}
+            protein={customMacros.protein}
+            carbs={customMacros.carbs}
+            fat={customMacros.fat}
           />
         </div>
+        
+        <MacroPieChart
+          protein={customMacros.protein.consumed}
+          carbs={customMacros.carbs.consumed}
+          fat={customMacros.fat.consumed}
+        />
         
         <div className="grid gap-6 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle>Meal Tracking</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Utensils className="h-4 w-4" />
+                Meal Tracking
+              </CardTitle>
               <MealLogger onAddMeal={handleAddMeal} />
             </CardHeader>
             <CardContent>
@@ -91,8 +177,8 @@ const Dashboard = () => {
                 <TabsContent value="today">
                   <ScrollArea className="h-[300px]">
                     <div className="space-y-4">
-                      {macros.meals.length > 0 ? (
-                        macros.meals.map((meal) => (
+                      {customMacros.meals.length > 0 ? (
+                        customMacros.meals.map((meal) => (
                           <div 
                             key={meal.id} 
                             className="flex justify-between items-start border-b pb-3 last:border-0"
@@ -153,7 +239,7 @@ const Dashboard = () => {
         
         <div className="grid gap-6 md:grid-cols-2 mb-6">
           <ProgressChart title="Weekly Nutrition Trends" />
-          <TrainerFeedback feedbackItems={macros.trainerFeedback} />
+          <TrainerFeedback feedbackItems={customMacros.trainerFeedback} />
         </div>
         
         {selectedMeal && (

@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Meal } from '@/components/MealLogger';
 import { FeedbackItem } from '@/hooks/useMacros';
-import { ChevronLeft, Edit, MessageSquare } from 'lucide-react';
+import { ChevronLeft, Edit, MessageSquare, Target, Utensils } from 'lucide-react';
 import FeedbackForm from './FeedbackForm';
 import { format } from 'date-fns';
 import MacroTracker from './MacroTracker';
 import MacroPieChart from './MacroPieChart';
 import ProgressChart from './ProgressChart';
+import { Badge } from '@/components/ui/badge';
 
 interface StudentDetailProps {
   student: {
@@ -25,6 +26,9 @@ interface StudentDetailProps {
     protein: { consumed: number; goal: number };
     carbs: { consumed: number; goal: number };
     fat: { consumed: number; goal: number };
+    age?: number;
+    dietaryPreference?: string;
+    personalGoal?: string;
   };
   meals: Meal[];
   feedback: FeedbackItem[];
@@ -45,6 +49,15 @@ const StudentDetail: React.FC<StudentDetailProps> = ({
       .map(n => n[0])
       .join('')
       .toUpperCase();
+  };
+
+  const formatGoal = (goal?: string) => {
+    if (!goal) return 'Not specified';
+    
+    return goal
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
   
   return (
@@ -77,8 +90,62 @@ const StudentDetail: React.FC<StudentDetailProps> = ({
           </div>
         </CardHeader>
       </Card>
-      
+
       <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Student Goals & Preferences
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium mb-1">Age</p>
+                  <p>{student.age || 'Not specified'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Goal</p>
+                  <p>{formatGoal(student.personalGoal)}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium mb-1">Dietary Preference</p>
+                <Badge variant="outline" className="bg-primary/10">
+                  {student.dietaryPreference 
+                    ? student.dietaryPreference.charAt(0).toUpperCase() + student.dietaryPreference.slice(1)
+                    : 'Not specified'}
+                </Badge>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium mb-1">Daily Targets</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-sm">
+                    <p className="font-medium">Calories</p>
+                    <p>{student.calorieTarget} kcal</p>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium">Protein</p>
+                    <p>{student.protein.goal}g</p>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium">Carbs</p>
+                    <p>{student.carbs.goal}g</p>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium">Fat</p>
+                    <p>{student.fat.goal}g</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
         <MacroTracker
           calories={{
             consumed: student.currentCalories,
@@ -88,17 +155,20 @@ const StudentDetail: React.FC<StudentDetailProps> = ({
           carbs={student.carbs}
           fat={student.fat}
         />
-        
-        <MacroPieChart
-          protein={student.protein.consumed}
-          carbs={student.carbs.consumed}
-          fat={student.fat.consumed}
-        />
       </div>
+      
+      <MacroPieChart
+        protein={student.protein.consumed}
+        carbs={student.carbs.consumed}
+        fat={student.fat.consumed}
+      />
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Recent Meals</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Utensils className="h-4 w-4" />
+            Recent Meals
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {meals.length > 0 ? (

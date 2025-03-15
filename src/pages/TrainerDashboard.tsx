@@ -159,12 +159,24 @@ const TrainerDashboard = () => {
         lastActive: '2 hours ago', // In a real app, this would come from actual tracking
         accountStatus: student.status || 'active',
         dietaryStatus: 'on-track', // This would come from actual tracking in a real app
-        calorieTarget: 2200, // In a real app, this would be stored per student
+        calorieTarget: student.studentDetails?.macroGoals?.calories || 2200,
         currentCalories: 1950, // In a real app, this would be calculated from meals
-        protein: { consumed: 120, goal: 135 },
-        carbs: { consumed: 180, goal: 220 },
-        fat: { consumed: 60, goal: 70 },
+        protein: { 
+          consumed: 120, 
+          goal: student.studentDetails?.macroGoals?.protein || 135 
+        },
+        carbs: { 
+          consumed: 180, 
+          goal: student.studentDetails?.macroGoals?.carbs || 220 
+        },
+        fat: { 
+          consumed: 60, 
+          goal: student.studentDetails?.macroGoals?.fat || 70 
+        },
         firstLogin: student.firstLogin,
+        age: student.studentDetails?.age,
+        dietaryPreference: student.studentDetails?.dietaryPreference,
+        personalGoal: student.studentDetails?.personalGoal,
       }));
       
       setStudents(mappedStudents);
@@ -220,6 +232,7 @@ const TrainerDashboard = () => {
               foods={macros.foodDatabase}
               onAddFood={macros.addFoodItem}
               onDeleteFood={macros.deleteFoodItem}
+              isAdmin={false}
             />
           </TabsContent>
         </Tabs>

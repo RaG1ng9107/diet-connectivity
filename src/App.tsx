@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import TrainerDashboard from "./pages/TrainerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import FirstLoginSetup from "./components/FirstLoginSetup";
 
 // Layout
@@ -28,7 +29,7 @@ const ProtectedRoute = ({
   requiredRole 
 }: { 
   children: JSX.Element, 
-  requiredRole?: 'student' | 'trainer' 
+  requiredRole?: 'student' | 'trainer' | 'admin' 
 }) => {
   const { isAuthenticated, user, loading } = useAuth();
   
@@ -51,11 +52,15 @@ const ProtectedRoute = ({
   
   // Check if user has required role
   if (requiredRole && user?.role !== requiredRole) {
-    // Redirect students to student dashboard and trainers to trainer dashboard
+    // Redirect to appropriate dashboard based on role
     if (user?.role === 'student') {
       return <Navigate to="/dashboard" />;
-    } else {
+    } else if (user?.role === 'trainer') {
       return <Navigate to="/trainer-dashboard" />;
+    } else if (user?.role === 'admin') {
+      return <Navigate to="/admin-dashboard" />;
+    } else {
+      return <Navigate to="/" />;
     }
   }
   
@@ -85,6 +90,14 @@ const AppContent = () => {
               element={
                 <ProtectedRoute requiredRole="trainer">
                   <TrainerDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin-dashboard" 
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
                 </ProtectedRoute>
               } 
             />

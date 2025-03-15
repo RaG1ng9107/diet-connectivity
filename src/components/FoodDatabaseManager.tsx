@@ -21,12 +21,14 @@ interface FoodDatabaseManagerProps {
   foods: FoodItem[];
   onAddFood: (food: FoodItem) => void;
   onDeleteFood: (foodId: string) => void;
+  isAdmin?: boolean;
 }
 
 const FoodDatabaseManager: React.FC<FoodDatabaseManagerProps> = ({ 
   foods, 
   onAddFood,
-  onDeleteFood
+  onDeleteFood,
+  isAdmin = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -72,7 +74,7 @@ const FoodDatabaseManager: React.FC<FoodDatabaseManagerProps> = ({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center flex-wrap gap-2">
           <CardTitle className="text-lg font-semibold">Food Database</CardTitle>
-          <FoodManagementForm onAddFood={onAddFood} />
+          {isAdmin && <FoodManagementForm onAddFood={onAddFood} />}
         </div>
       </CardHeader>
       <CardContent>
@@ -123,7 +125,7 @@ const FoodDatabaseManager: React.FC<FoodDatabaseManagerProps> = ({
                 <TableHead className="text-right">Protein</TableHead>
                 <TableHead className="text-right">Carbs</TableHead>
                 <TableHead className="text-right">Fat</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -136,30 +138,32 @@ const FoodDatabaseManager: React.FC<FoodDatabaseManagerProps> = ({
                     <TableCell className="text-right">{food.proteinPer100g}g</TableCell>
                     <TableCell className="text-right">{food.carbsPer100g}g</TableCell>
                     <TableCell className="text-right">{food.fatPer100g}g</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => toast({
-                          title: 'Coming Soon',
-                          description: 'Edit functionality will be available in a future update'
-                        })}>
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDelete(food.id, food.name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => toast({
+                            title: 'Coming Soon',
+                            description: 'Edit functionality will be available in a future update'
+                          })}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Edit</span>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDelete(food.id, food.name)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-6 text-muted-foreground">
                     No food items found.
                   </TableCell>
                 </TableRow>
