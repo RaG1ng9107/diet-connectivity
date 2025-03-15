@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { generateId } from '@/utils/dataUtils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus, Activity } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Activity, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { FoodItem, mockFoodDatabase, calculateNutrition } from '@/data/foodDatabase';
+import { FoodItem, calculateNutrition } from '@/data/foodDatabase';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Meal {
   id: string;
@@ -45,7 +46,54 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
     carbs: 0,
     fat: 0
   });
+  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fetch food items from Supabase
+  useEffect(() => {
+    const fetchFoodItems = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('food_items')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Transform the data from Supabase to match our FoodItem type
+          const transformedData: FoodItem[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            caloriesPer100g: item.calories_per_100g,
+            proteinPer100g: parseFloat(item.protein_per_100g || '0'),
+            carbsPer100g: parseFloat(item.carbs_per_100g || '0'),
+            fatPer100g: parseFloat(item.fat_per_100g || '0'),
+            recommendedServing: item.recommended_serving || 100,
+            servingUnit: item.serving_unit || 'g',
+            trainerNotes: item.trainer_notes,
+          }));
+          
+          setFoodItems(transformedData);
+        }
+      } catch (error) {
+        console.error('Error fetching food items:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load food database. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFoodItems();
+  }, [toast]);
 
   const resetForm = () => {
     setSelectedFoodId('');
@@ -63,7 +111,7 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
   // Calculate nutrition when food or quantity changes
   useEffect(() => {
     if (selectedFoodId && quantity) {
-      const foodItem = mockFoodDatabase.find(item => item.id === selectedFoodId);
+      const foodItem = foodItems.find(item => item.id === selectedFoodId);
       if (foodItem) {
         const nutrition = calculateNutrition(foodItem, Number(quantity));
         setCalculatedNutrition(nutrition);
@@ -71,7 +119,7 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
     } else {
       setCalculatedNutrition({ calories: 0, protein: 0, carbs: 0, fat: 0 });
     }
-  }, [selectedFoodId, quantity]);
+  }, [selectedFoodId, quantity, foodItems]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +133,7 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
       return;
     }
     
-    const foodItem = mockFoodDatabase.find(item => item.id === selectedFoodId);
+    const foodItem = foodItems.find(item => item.id === selectedFoodId);
     if (!foodItem) return;
     
     const newMeal: Meal = {
@@ -169,36 +217,43 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
               
               <div className="col-span-2">
                 <Label htmlFor="foodItem">Food Item</Label>
-                <Select value={selectedFoodId} onValueChange={setSelectedFoodId} required>
-                  <SelectTrigger id="foodItem" className="mt-1">
-                    <SelectValue placeholder="Select from approved food list" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    <div className="flex flex-col gap-1 py-1 px-2">
-                      {mockFoodDatabase.map((food) => (
-                        <SelectItem key={food.id} value={food.id} className="flex items-center">
-                          <div className="flex flex-col">
-                            <span>{food.name}</span>
-                            <div className="flex gap-1 mt-1">
-                              <Badge variant="outline" className="text-xs bg-primary/10">
-                                {food.caloriesPer100g} kcal/100g
-                              </Badge>
-                              <Badge variant="outline" className="text-xs bg-primary/10">
-                                P: {food.proteinPer100g}g
-                              </Badge>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-2 mt-1">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Loading food database...</span>
+                  </div>
+                ) : (
+                  <Select value={selectedFoodId} onValueChange={setSelectedFoodId} required>
+                    <SelectTrigger id="foodItem" className="mt-1">
+                      <SelectValue placeholder="Select from approved food list" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <div className="flex flex-col gap-1 py-1 px-2">
+                        {foodItems.map((food) => (
+                          <SelectItem key={food.id} value={food.id} className="flex items-center">
+                            <div className="flex flex-col">
+                              <span>{food.name}</span>
+                              <div className="flex gap-1 mt-1">
+                                <Badge variant="outline" className="text-xs bg-primary/10">
+                                  {food.caloriesPer100g} kcal/100g
+                                </Badge>
+                                <Badge variant="outline" className="text-xs bg-primary/10">
+                                  P: {food.proteinPer100g}g
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </div>
-                  </SelectContent>
-                </Select>
+                          </SelectItem>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                )}
                 
                 {selectedFoodId && (
                   <div className="text-xs text-muted-foreground mt-1">
-                    {mockFoodDatabase.find(f => f.id === selectedFoodId)?.trainerNotes && (
+                    {foodItems.find(f => f.id === selectedFoodId)?.trainerNotes && (
                       <p className="italic">
-                        <span className="font-medium">Trainer note:</span> {mockFoodDatabase.find(f => f.id === selectedFoodId)?.trainerNotes}
+                        <span className="font-medium">Trainer note:</span> {foodItems.find(f => f.id === selectedFoodId)?.trainerNotes}
                       </p>
                     )}
                   </div>
@@ -208,7 +263,7 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
               <div className="col-span-2 grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="quantity">Quantity ({selectedFoodId ? 
-                    mockFoodDatabase.find(f => f.id === selectedFoodId)?.servingUnit : 'g'})</Label>
+                    foodItems.find(f => f.id === selectedFoodId)?.servingUnit : 'g'})</Label>
                   <Input 
                     id="quantity" 
                     type="number" 
@@ -221,8 +276,8 @@ const MealLogger: React.FC<MealLoggerProps> = ({ onAddMeal }) => {
                   />
                   {selectedFoodId && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      Recommended: {mockFoodDatabase.find(f => f.id === selectedFoodId)?.recommendedServing}
-                      {mockFoodDatabase.find(f => f.id === selectedFoodId)?.servingUnit}
+                      Recommended: {foodItems.find(f => f.id === selectedFoodId)?.recommendedServing}
+                      {foodItems.find(f => f.id === selectedFoodId)?.servingUnit}
                     </div>
                   )}
                 </div>

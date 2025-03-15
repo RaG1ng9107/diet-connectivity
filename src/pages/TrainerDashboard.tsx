@@ -8,9 +8,11 @@ import FoodDatabaseManager from '@/components/FoodDatabaseManager';
 import StudentDetail from '@/components/StudentDetail';
 import { useMacros, FeedbackItem } from '@/hooks/useMacros';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockFoodDatabase } from '@/data/foodDatabase';
 import { Meal } from '@/components/MealLogger';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { FoodItem } from '@/data/foodDatabase';
 
 // Mock meals for students
 const getMockMealsForStudent = (studentId: string): Meal[] => {
@@ -143,8 +145,11 @@ const TrainerDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('students');
   const [students, setStudents] = useState<any[]>([]);
+  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const macros = useMacros();
   const { user, getAllStudents } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     if (user?.id) {
@@ -182,6 +187,51 @@ const TrainerDashboard = () => {
       setStudents(mappedStudents);
     }
   }, [user?.id, getAllStudents]);
+
+  // Fetch food items from Supabase
+  useEffect(() => {
+    const fetchFoodItems = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('food_items')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Transform the data from Supabase to match our FoodItem type
+          const transformedData: FoodItem[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            caloriesPer100g: item.calories_per_100g,
+            proteinPer100g: parseFloat(item.protein_per_100g || '0'),
+            carbsPer100g: parseFloat(item.carbs_per_100g || '0'),
+            fatPer100g: parseFloat(item.fat_per_100g || '0'),
+            recommendedServing: item.recommended_serving || 100,
+            servingUnit: item.serving_unit || 'g',
+            trainerNotes: item.trainer_notes,
+          }));
+          
+          setFoodItems(transformedData);
+        }
+      } catch (error) {
+        console.error('Error fetching food items:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load food database. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFoodItems();
+  }, [toast]);
   
   const handleStudentSelect = (student: typeof students[0]) => {
     setSelectedStudent(student);
@@ -193,6 +243,92 @@ const TrainerDashboard = () => {
   
   const handleAddFeedback = (feedback: FeedbackItem) => {
     macros.addFeedback(feedback);
+  };
+
+  // Handler to add food items
+  const handleAddFood = async (food: FoodItem) => {
+    try {
+      // Insert the new food item into Supabase
+      const { data, error } = await supabase
+        .from('food_items')
+        .insert({
+          name: food.name,
+          category: food.category,
+          calories_per_100g: food.caloriesPer100g,
+          protein_per_100g: food.proteinPer100g.toString(),
+          carbs_per_100g: food.carbsPer100g.toString(),
+          fat_per_100g: food.fatPer100g.toString(),
+          recommended_serving: food.recommendedServing,
+          serving_unit: food.servingUnit,
+          trainer_notes: food.trainerNotes,
+          created_by: user?.id
+        })
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Add to local state for immediate UI update
+      if (data) {
+        const newFood: FoodItem = {
+          id: data[0].id,
+          name: data[0].name,
+          category: data[0].category,
+          caloriesPer100g: data[0].calories_per_100g,
+          proteinPer100g: parseFloat(data[0].protein_per_100g || '0'),
+          carbsPer100g: parseFloat(data[0].carbs_per_100g || '0'),
+          fatPer100g: parseFloat(data[0].fat_per_100g || '0'),
+          recommendedServing: data[0].recommended_serving || 100,
+          servingUnit: data[0].serving_unit || 'g',
+          trainerNotes: data[0].trainer_notes,
+        };
+        
+        setFoodItems(prevFoods => [...prevFoods, newFood]);
+        
+        toast({
+          title: 'Success',
+          description: `${food.name} has been added to the database.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error adding food item:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add food item. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Handler to delete food items
+  const handleDeleteFood = async (foodId: string) => {
+    try {
+      // Delete the food item from Supabase
+      const { error } = await supabase
+        .from('food_items')
+        .delete()
+        .eq('id', foodId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Remove from local state for immediate UI update
+      setFoodItems(prevFoods => prevFoods.filter(food => food.id !== foodId));
+      
+      toast({
+        title: 'Success',
+        description: 'Food item has been deleted.',
+      });
+    } catch (error) {
+      console.error('Error deleting food item:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete food item. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -229,10 +365,11 @@ const TrainerDashboard = () => {
           
           <TabsContent value="foods">
             <FoodDatabaseManager 
-              foods={macros.foodDatabase}
-              onAddFood={macros.addFoodItem}
-              onDeleteFood={macros.deleteFoodItem}
+              foods={foodItems}
+              onAddFood={handleAddFood}
+              onDeleteFood={handleDeleteFood}
               isAdmin={false}
+              isLoading={isLoading}
             />
           </TabsContent>
         </Tabs>
