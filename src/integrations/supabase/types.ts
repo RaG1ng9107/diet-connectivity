@@ -9,7 +9,206 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      food_items: {
+        Row: {
+          calories_per_100g: number
+          carbs_per_100g: number | null
+          category: Database["public"]["Enums"]["food_category"]
+          created_at: string | null
+          created_by: string | null
+          fat_per_100g: number | null
+          id: string
+          name: string
+          protein_per_100g: number | null
+          recommended_serving: number | null
+          serving_unit: Database["public"]["Enums"]["serving_unit"] | null
+          trainer_notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          calories_per_100g: number
+          carbs_per_100g?: number | null
+          category?: Database["public"]["Enums"]["food_category"]
+          created_at?: string | null
+          created_by?: string | null
+          fat_per_100g?: number | null
+          id?: string
+          name: string
+          protein_per_100g?: number | null
+          recommended_serving?: number | null
+          serving_unit?: Database["public"]["Enums"]["serving_unit"] | null
+          trainer_notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          calories_per_100g?: number
+          carbs_per_100g?: number | null
+          category?: Database["public"]["Enums"]["food_category"]
+          created_at?: string | null
+          created_by?: string | null
+          fat_per_100g?: number | null
+          id?: string
+          name?: string
+          protein_per_100g?: number | null
+          recommended_serving?: number | null
+          serving_unit?: Database["public"]["Enums"]["serving_unit"] | null
+          trainer_notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      meal_logs: {
+        Row: {
+          calories: number
+          carbs: number | null
+          created_at: string | null
+          fat: number | null
+          food_item_id: string
+          id: string
+          logged_at: string
+          meal_type: Database["public"]["Enums"]["meal_type"]
+          protein: number | null
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs?: number | null
+          created_at?: string | null
+          fat?: number | null
+          food_item_id: string
+          id?: string
+          logged_at?: string
+          meal_type: Database["public"]["Enums"]["meal_type"]
+          protein?: number | null
+          quantity: number
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs?: number | null
+          created_at?: string | null
+          fat?: number | null
+          food_item_id?: string
+          id?: string
+          logged_at?: string
+          meal_type?: Database["public"]["Enums"]["meal_type"]
+          protein?: number | null
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_logs_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          name: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      student_details: {
+        Row: {
+          age: number | null
+          calories_goal: number | null
+          carbs_goal: number | null
+          created_at: string | null
+          dietary_preference:
+            | Database["public"]["Enums"]["dietary_preference"]
+            | null
+          fat_goal: number | null
+          id: string
+          personal_goal: Database["public"]["Enums"]["personal_goal"] | null
+          protein_goal: number | null
+          status: Database["public"]["Enums"]["student_status"] | null
+          trainer_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          age?: number | null
+          calories_goal?: number | null
+          carbs_goal?: number | null
+          created_at?: string | null
+          dietary_preference?:
+            | Database["public"]["Enums"]["dietary_preference"]
+            | null
+          fat_goal?: number | null
+          id: string
+          personal_goal?: Database["public"]["Enums"]["personal_goal"] | null
+          protein_goal?: number | null
+          status?: Database["public"]["Enums"]["student_status"] | null
+          trainer_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          age?: number | null
+          calories_goal?: number | null
+          carbs_goal?: number | null
+          created_at?: string | null
+          dietary_preference?:
+            | Database["public"]["Enums"]["dietary_preference"]
+            | null
+          fat_goal?: number | null
+          id?: string
+          personal_goal?: Database["public"]["Enums"]["personal_goal"] | null
+          protein_goal?: number | null
+          status?: Database["public"]["Enums"]["student_status"] | null
+          trainer_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      trainer_feedback: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          student_id: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          student_id: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          student_id?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +217,31 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      dietary_preference:
+        | "standard"
+        | "vegetarian"
+        | "vegan"
+        | "keto"
+        | "paleo"
+        | "other"
+      food_category:
+        | "protein"
+        | "carbs"
+        | "fat"
+        | "vegetable"
+        | "fruit"
+        | "dairy"
+        | "other"
+      meal_type: "breakfast" | "lunch" | "dinner" | "snack"
+      personal_goal:
+        | "weight-loss"
+        | "muscle-gain"
+        | "maintenance"
+        | "general-health"
+        | "performance"
+      serving_unit: "g" | "ml" | "serving"
+      student_status: "pending" | "active" | "inactive"
+      user_role: "admin" | "trainer" | "student"
     }
     CompositeTypes: {
       [_ in never]: never

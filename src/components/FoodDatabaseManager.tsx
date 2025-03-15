@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FoodItem } from '@/data/foodDatabase';
-import { Search, Edit, Trash2, Filter } from 'lucide-react';
+import { Search, Edit, Trash2, Filter, Loader2 } from 'lucide-react';
 import FoodManagementForm from './FoodManagementForm';
 import {
   DropdownMenu,
@@ -22,13 +22,15 @@ interface FoodDatabaseManagerProps {
   onAddFood: (food: FoodItem) => void;
   onDeleteFood: (foodId: string) => void;
   isAdmin?: boolean;
+  isLoading?: boolean;
 }
 
 const FoodDatabaseManager: React.FC<FoodDatabaseManagerProps> = ({ 
   foods, 
   onAddFood,
   onDeleteFood,
-  isAdmin = false
+  isAdmin = false,
+  isLoading = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -116,60 +118,69 @@ const FoodDatabaseManager: React.FC<FoodDatabaseManagerProps> = ({
         </div>
         
         <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Food Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Calories</TableHead>
-                <TableHead className="text-right">Protein</TableHead>
-                <TableHead className="text-right">Carbs</TableHead>
-                <TableHead className="text-right">Fat</TableHead>
-                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredFoods.length > 0 ? (
-                filteredFoods.map((food) => (
-                  <TableRow key={food.id}>
-                    <TableCell className="font-medium">{food.name}</TableCell>
-                    <TableCell>{getCategoryBadge(food.category)}</TableCell>
-                    <TableCell className="text-right">{food.caloriesPer100g} kcal</TableCell>
-                    <TableCell className="text-right">{food.proteinPer100g}g</TableCell>
-                    <TableCell className="text-right">{food.carbsPer100g}g</TableCell>
-                    <TableCell className="text-right">{food.fatPer100g}g</TableCell>
-                    {isAdmin && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => toast({
-                            title: 'Coming Soon',
-                            description: 'Edit functionality will be available in a future update'
-                          })}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleDelete(food.id, food.name)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              ) : (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-lg font-medium">Loading food database...</span>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-6 text-muted-foreground">
-                    No food items found.
-                  </TableCell>
+                  <TableHead>Food Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Calories</TableHead>
+                  <TableHead className="text-right">Protein</TableHead>
+                  <TableHead className="text-right">Carbs</TableHead>
+                  <TableHead className="text-right">Fat</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredFoods.length > 0 ? (
+                  filteredFoods.map((food) => (
+                    <TableRow key={food.id}>
+                      <TableCell className="font-medium">{food.name}</TableCell>
+                      <TableCell>{getCategoryBadge(food.category)}</TableCell>
+                      <TableCell className="text-right">{food.caloriesPer100g} kcal</TableCell>
+                      <TableCell className="text-right">{food.proteinPer100g}g</TableCell>
+                      <TableCell className="text-right">{food.carbsPer100g}g</TableCell>
+                      <TableCell className="text-right">{food.fatPer100g}g</TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => toast({
+                              title: 'Coming Soon',
+                              description: 'Edit functionality will be available in a future update'
+                            })}>
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDelete(food.id, food.name)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-6 text-muted-foreground">
+                      {searchQuery || categoryFilter !== 'all' 
+                        ? 'No food items found matching your search criteria.'
+                        : 'No food items in the database. Add some to get started!'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </CardContent>
     </Card>
