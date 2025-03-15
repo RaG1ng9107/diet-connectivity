@@ -39,9 +39,9 @@ const AdminDashboard = () => {
             name: item.name,
             category: item.category,
             caloriesPer100g: item.calories_per_100g,
-            proteinPer100g: parseFloat(item.protein_per_100g),
-            carbsPer100g: parseFloat(item.carbs_per_100g),
-            fatPer100g: parseFloat(item.fat_per_100g),
+            proteinPer100g: parseFloat(item.protein_per_100g || '0'),
+            carbsPer100g: parseFloat(item.carbs_per_100g || '0'),
+            fatPer100g: parseFloat(item.fat_per_100g || '0'),
             recommendedServing: item.recommended_serving || 100,
             servingUnit: item.serving_unit || 'g',
             trainerNotes: item.trainer_notes,
@@ -70,7 +70,6 @@ const AdminDashboard = () => {
       const { data, error } = await supabase
         .from('food_items')
         .insert({
-          id: food.id,
           name: food.name,
           category: food.category,
           calories_per_100g: food.caloriesPer100g,
@@ -95,9 +94,9 @@ const AdminDashboard = () => {
           name: data[0].name,
           category: data[0].category,
           caloriesPer100g: data[0].calories_per_100g,
-          proteinPer100g: parseFloat(data[0].protein_per_100g),
-          carbsPer100g: parseFloat(data[0].carbs_per_100g),
-          fatPer100g: parseFloat(data[0].fat_per_100g),
+          proteinPer100g: parseFloat(data[0].protein_per_100g || '0'),
+          carbsPer100g: parseFloat(data[0].carbs_per_100g || '0'),
+          fatPer100g: parseFloat(data[0].fat_per_100g || '0'),
           recommendedServing: data[0].recommended_serving || 100,
           servingUnit: data[0].serving_unit || 'g',
           trainerNotes: data[0].trainer_notes,
