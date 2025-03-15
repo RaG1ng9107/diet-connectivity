@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserProfile from '@/components/UserProfile';
@@ -33,7 +32,6 @@ const AdminDashboard = () => {
         }
         
         if (data) {
-          // Transform the data from Supabase to match our FoodItem type
           const transformedData: FoodItem[] = data.map(item => ({
             id: item.id,
             name: item.name,
@@ -66,7 +64,6 @@ const AdminDashboard = () => {
   
   const handleAddFood = async (food: FoodItem) => {
     try {
-      // Insert the new food item into Supabase
       const { data, error } = await supabase
         .from('food_items')
         .insert({
@@ -87,7 +84,6 @@ const AdminDashboard = () => {
         throw error;
       }
       
-      // Add to local state for immediate UI update
       if (data) {
         const newFood: FoodItem = {
           id: data[0].id,
@@ -121,7 +117,6 @@ const AdminDashboard = () => {
   
   const handleDeleteFood = async (foodId: string) => {
     try {
-      // Delete the food item from Supabase
       const { error } = await supabase
         .from('food_items')
         .delete()
@@ -131,7 +126,6 @@ const AdminDashboard = () => {
         throw error;
       }
       
-      // Remove from local state for immediate UI update
       setFoodItems(prevFoods => prevFoods.filter(food => food.id !== foodId));
       
       toast({
