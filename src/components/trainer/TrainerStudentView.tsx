@@ -2,8 +2,8 @@
 import React from 'react';
 import StudentList from '@/components/StudentList';
 import StudentDetail from '@/components/StudentDetail';
-import { FeedbackItem } from '@/hooks/useMacros';
 import { Meal } from '@/components/MealLogger';
+import { FeedbackItem } from '@/hooks/useMacros';
 
 interface TrainerStudentViewProps {
   selectedStudent: any | null;
@@ -12,7 +12,11 @@ interface TrainerStudentViewProps {
   feedbackFetcher: (studentId: string) => FeedbackItem[];
   onStudentSelect: (student: any) => void;
   onBackToList: () => void;
-  onAddFeedback: (feedback: FeedbackItem) => void;
+  onAddFeedback: (feedback: any) => void;
+  isLoading?: {
+    meals?: boolean;
+    feedback?: boolean;
+  };
 }
 
 const TrainerStudentView: React.FC<TrainerStudentViewProps> = ({
@@ -22,24 +26,29 @@ const TrainerStudentView: React.FC<TrainerStudentViewProps> = ({
   feedbackFetcher,
   onStudentSelect,
   onBackToList,
-  onAddFeedback
+  onAddFeedback,
+  isLoading = { meals: false, feedback: false }
 }) => {
-  if (selectedStudent) {
-    return (
-      <StudentDetail
-        student={selectedStudent}
-        meals={mealsFetcher(selectedStudent.id)}
-        feedback={feedbackFetcher(selectedStudent.id)}
-        onAddFeedback={onAddFeedback}
-        onBack={onBackToList}
-      />
-    );
+  // If no student is selected, show the student list
+  if (!selectedStudent) {
+    return <StudentList students={students} onStudentSelect={onStudentSelect} />;
   }
   
+  // If a student is selected, show their details
+  const studentMeals = mealsFetcher(selectedStudent.id);
+  const studentFeedback = feedbackFetcher(selectedStudent.id);
+  
   return (
-    <StudentList 
-      students={students} 
-      onStudentSelect={onStudentSelect}
+    <StudentDetail
+      student={selectedStudent}
+      meals={studentMeals}
+      feedback={studentFeedback}
+      onAddFeedback={(feedback) => onAddFeedback({
+        ...feedback,
+        studentId: selectedStudent.id
+      })}
+      onBack={onBackToList}
+      isLoading={isLoading}
     />
   );
 };

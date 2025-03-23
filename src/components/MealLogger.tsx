@@ -1,23 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { generateId } from '@/utils/dataUtils';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus, Activity, Loader2 } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { FoodItem, calculateNutrition } from '@/data/foodDatabase';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import MealForm from '@/components/meal/MealForm';
-import NutritionCalculator from '@/components/meal/NutritionCalculator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus } from "lucide-react";
+import { FoodItem } from '@/data/foodDatabase';
 import { useFoodItems } from '@/hooks/useFoodItems';
+import MealForm from '@/components/meal/MealForm';
 
 export interface Meal {
   id: string;

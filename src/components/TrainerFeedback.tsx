@@ -1,57 +1,51 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle } from 'lucide-react';
-
-interface FeedbackItem {
-  id: string;
-  trainerId: string;
-  trainerName: string;
-  trainerAvatar?: string;
-  message: string;
-  date: Date;
-}
+import { FeedbackItem } from '@/hooks/useMacros';
+import { format } from 'date-fns';
+import { MessageSquare, Loader2 } from 'lucide-react';
 
 interface TrainerFeedbackProps {
   feedbackItems: FeedbackItem[];
+  isLoading?: boolean;
 }
 
-const TrainerFeedback: React.FC<TrainerFeedbackProps> = ({ feedbackItems }) => {
+const TrainerFeedback: React.FC<TrainerFeedbackProps> = ({ 
+  feedbackItems, 
+  isLoading = false
+}) => {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">Trainer Feedback</CardTitle>
-        <MessageCircle className="h-4 w-4 text-muted-foreground" />
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Trainer Feedback</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {feedbackItems.length > 0 ? (
-            feedbackItems.map((item) => (
-              <div key={item.id} className="flex items-start space-x-4">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={item.trainerAvatar} alt={item.trainerName} />
-                  <AvatarFallback>{item.trainerName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="font-semibold text-sm">{item.trainerName}</h4>
-                    <span className="text-xs text-muted-foreground">
-                      {item.date.toLocaleDateString()}
-                    </span>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+            <span>Loading feedback...</span>
+          </div>
+        ) : feedbackItems && feedbackItems.length > 0 ? (
+          <div className="space-y-4">
+            {feedbackItems.map((item) => (
+              <div key={item.id} className="flex items-start gap-3 p-3 border rounded-md">
+                <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex justify-between">
+                    <p className="font-medium text-sm">{format(item.date, 'MMM d, yyyy')}</p>
+                    <p className="text-sm text-muted-foreground">{format(item.date, 'h:mm a')}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{item.message}</p>
+                  <p className="mt-1">{item.message}</p>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center py-4 text-center text-muted-foreground">
-              <MessageCircle className="h-8 w-8 mb-2" />
-              <p>No feedback yet from your trainer</p>
-              <p className="text-xs">Check back later for personalized recommendations</p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-muted-foreground">
+            <MessageSquare className="h-12 w-12 mx-auto opacity-20 mb-2" />
+            <p>No feedback from your trainer yet</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

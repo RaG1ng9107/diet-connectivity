@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserProfile from '@/components/UserProfile';
 import PageTransition from '@/components/layout/PageTransition';
-import { useMacros } from '@/hooks/useMacros';
 import MacroTracker from '@/components/MacroTracker';
 import MacroPieChart from '@/components/MacroPieChart';
 import MealLogger from '@/components/MealLogger';
@@ -25,13 +24,19 @@ import {
 } from '@/components/ui/dialog';
 import { Meal } from '@/components/MealLogger';
 import { format } from 'date-fns';
+import { useMealLogs } from '@/hooks/useMealLogs';
+import { useTrainerFeedback } from '@/hooks/useTrainerFeedback';
+import FoodDatabaseManager from '@/components/FoodDatabaseManager';
+import { useFoodItems } from '@/hooks/useFoodItems';
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const macros = useMacros();
   const { user } = useAuth();
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { foodItems, isLoading: foodsLoading } = useFoodItems();
+  const { meals, isLoading: mealsLoading, addMeal, deleteMeal } = useMealLogs({ userId: user?.id });
+  const { feedback, isLoading: feedbackLoading } = useTrainerFeedback({ studentId: user?.id });
   
   // Get personalized macro goals if available in user's studentDetails
   const personalizedGoals = user?.studentDetails?.macroGoals || {
@@ -41,29 +46,44 @@ const Dashboard = () => {
     fat: 60
   };
   
-  // Override the default goals with personalized goals
-  const customMacros = useMacros({
-    calories: personalizedGoals.calories,
-    protein: personalizedGoals.protein || 140,
-    carbs: personalizedGoals.carbs || 220,
-    fat: personalizedGoals.fat || 60
-  });
+  // Calculate consumed nutrients from actual meals data
+  const consumed = meals.reduce(
+    (acc, meal) => {
+      return {
+        calories: acc.calories + meal.calories,
+        protein: acc.protein + meal.protein,
+        carbs: acc.carbs + meal.carbs,
+        fat: acc.fat + meal.fat,
+      };
+    },
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+  
+  const macros = {
+    calories: {
+      consumed: consumed.calories,
+      goal: personalizedGoals.calories,
+    },
+    protein: {
+      consumed: consumed.protein,
+      goal: personalizedGoals.protein || 140,
+    },
+    carbs: {
+      consumed: consumed.carbs,
+      goal: personalizedGoals.carbs || 220,
+    },
+    fat: {
+      consumed: consumed.fat,
+      goal: personalizedGoals.fat || 60,
+    },
+  };
   
   const handleAddMeal = (meal: Meal) => {
-    customMacros.addMeal(meal);
-    toast({
-      title: "Meal added",
-      description: `${meal.foodItemName} has been logged successfully.`,
-    });
+    addMeal(meal);
   };
   
   const handleDeleteMeal = (mealId: string, mealName: string) => {
-    customMacros.deleteMeal(mealId);
-    toast({
-      title: "Meal deleted",
-      description: `${mealName} has been removed from your log.`,
-      variant: "destructive",
-    });
+    deleteMeal(mealId);
   };
   
   const handleEditMeal = (meal: Meal) => {
@@ -145,17 +165,17 @@ const Dashboard = () => {
           </Card>
           
           <MacroTracker
-            calories={customMacros.calories}
-            protein={customMacros.protein}
-            carbs={customMacros.carbs}
-            fat={customMacros.fat}
+            calories={macros.calories}
+            protein={macros.protein}
+            carbs={macros.carbs}
+            fat={macros.fat}
           />
         </div>
         
         <MacroPieChart
-          protein={customMacros.protein.consumed}
-          carbs={customMacros.carbs.consumed}
-          fat={customMacros.fat.consumed}
+          protein={macros.protein.consumed}
+          carbs={macros.carbs.consumed}
+          fat={macros.fat.consumed}
         />
         
         <div className="grid gap-6 mb-6">
@@ -177,8 +197,12 @@ const Dashboard = () => {
                 <TabsContent value="today">
                   <ScrollArea className="h-[300px]">
                     <div className="space-y-4">
-                      {customMacros.meals.length > 0 ? (
-                        customMacros.meals.map((meal) => (
+                      {mealsLoading ? (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <p>Loading meals...</p>
+                        </div>
+                      ) : meals.length > 0 ? (
+                        meals.map((meal) => (
                           <div 
                             key={meal.id} 
                             className="flex justify-between items-start border-b pb-3 last:border-0"
@@ -239,7 +263,7 @@ const Dashboard = () => {
         
         <div className="grid gap-6 md:grid-cols-2 mb-6">
           <ProgressChart title="Weekly Nutrition Trends" />
-          <TrainerFeedback feedbackItems={customMacros.trainerFeedback} />
+          <TrainerFeedback feedbackItems={feedback} isLoading={feedbackLoading} />
         </div>
         
         {selectedMeal && (
@@ -259,6 +283,23 @@ const Dashboard = () => {
             </DialogContent>
           </Dialog>
         )}
+
+        <div className="mt-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Food Database</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FoodDatabaseManager 
+                foods={foodItems}
+                onAddFood={() => {}}
+                onDeleteFood={() => {}}
+                isAdmin={false}
+                isLoading={foodsLoading}
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </PageTransition>
   );

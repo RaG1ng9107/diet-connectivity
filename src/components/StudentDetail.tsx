@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Meal } from '@/components/MealLogger';
 import { FeedbackItem } from '@/hooks/useMacros';
-import { ChevronLeft, Edit, MessageSquare, Target, Utensils } from 'lucide-react';
+import { ChevronLeft, Edit, MessageSquare, Target, Utensils, Loader2 } from 'lucide-react';
 import FeedbackForm from './FeedbackForm';
 import { format } from 'date-fns';
 import MacroTracker from './MacroTracker';
@@ -34,6 +34,10 @@ interface StudentDetailProps {
   feedback: FeedbackItem[];
   onAddFeedback: (feedback: FeedbackItem) => void;
   onBack: () => void;
+  isLoading?: {
+    meals?: boolean;
+    feedback?: boolean;
+  };
 }
 
 const StudentDetail: React.FC<StudentDetailProps> = ({ 
@@ -41,7 +45,8 @@ const StudentDetail: React.FC<StudentDetailProps> = ({
   meals, 
   feedback,
   onAddFeedback,
-  onBack 
+  onBack,
+  isLoading = { meals: false, feedback: false }
 }) => {
   const getInitials = (name: string) => {
     return name
@@ -171,7 +176,12 @@ const StudentDetail: React.FC<StudentDetailProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {meals.length > 0 ? (
+          {isLoading.meals ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+              <span>Loading meals...</span>
+            </div>
+          ) : meals.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -218,26 +228,33 @@ const StudentDetail: React.FC<StudentDetailProps> = ({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {feedback.length > 0 ? (
-                feedback.map((item) => (
-                  <div key={item.id} className="flex items-start gap-3 p-3 border rounded-md">
-                    <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <p className="font-medium text-sm">{format(item.date, 'MMM d, yyyy')}</p>
-                        <p className="text-sm text-muted-foreground">{format(item.date, 'h:mm a')}</p>
+            {isLoading.feedback ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                <span>Loading feedback...</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {feedback.length > 0 ? (
+                  feedback.map((item) => (
+                    <div key={item.id} className="flex items-start gap-3 p-3 border rounded-md">
+                      <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <p className="font-medium text-sm">{format(item.date, 'MMM d, yyyy')}</p>
+                          <p className="text-sm text-muted-foreground">{format(item.date, 'h:mm a')}</p>
+                        </div>
+                        <p className="mt-1">{item.message}</p>
                       </div>
-                      <p className="mt-1">{item.message}</p>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    No feedback provided yet
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  No feedback provided yet
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

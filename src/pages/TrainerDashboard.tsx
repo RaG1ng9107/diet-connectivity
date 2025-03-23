@@ -1,144 +1,33 @@
+
 import React, { useState, useEffect } from 'react';
 import UserProfile from '@/components/UserProfile';
 import PageTransition from '@/components/layout/PageTransition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
-import { useMacros, FeedbackItem } from '@/hooks/useMacros';
 import TrainerStudentView from '@/components/trainer/TrainerStudentView';
 import TrainerFoodView from '@/components/trainer/TrainerFoodView';
-import { Meal } from '@/components/MealLogger';
-
-const getMockMealsForStudent = (studentId: string): Meal[] => {
-  if (studentId === '1') {
-    return [
-      {
-        id: '101',
-        foodItemId: '1',
-        foodItemName: 'Grilled Chicken Breast',
-        quantity: 150,
-        servingUnit: 'g' as const,
-        calories: 248,
-        protein: 46.5,
-        carbs: 0,
-        fat: 5.4,
-        mealType: 'lunch',
-        timestamp: new Date(new Date().setHours(13, 0)),
-      },
-      {
-        id: '102',
-        foodItemId: '6',
-        foodItemName: 'Greek Yogurt',
-        quantity: 150,
-        servingUnit: 'g' as const,
-        calories: 88,
-        protein: 15,
-        carbs: 5.4,
-        fat: 0.6,
-        mealType: 'breakfast',
-        timestamp: new Date(new Date().setHours(8, 30)),
-      },
-    ];
-  } else if (studentId === '2') {
-    return [
-      {
-        id: '201',
-        foodItemId: '8',
-        foodItemName: 'Sweet Potato',
-        quantity: 200,
-        servingUnit: 'g' as const,
-        calories: 172,
-        protein: 3.2,
-        carbs: 40.2,
-        fat: 0.2,
-        mealType: 'dinner',
-        timestamp: new Date(new Date().setHours(19, 0)),
-      },
-    ];
-  } else if (studentId === '3') {
-    return [
-      {
-        id: '301',
-        foodItemId: '2',
-        foodItemName: 'Brown Rice',
-        quantity: 100,
-        servingUnit: 'g' as const,
-        calories: 112,
-        protein: 2.6,
-        carbs: 23.5,
-        fat: 0.9,
-        mealType: 'lunch',
-        timestamp: new Date(new Date().setHours(12, 30)),
-      },
-      {
-        id: '302',
-        foodItemId: '7',
-        foodItemName: 'Salmon Fillet',
-        quantity: 120,
-        servingUnit: 'g' as const,
-        calories: 250,
-        protein: 24,
-        carbs: 0,
-        fat: 15.6,
-        mealType: 'dinner',
-        timestamp: new Date(new Date().setHours(19, 30)),
-      },
-    ];
-  }
-  return [];
-};
-
-const getMockFeedbackForStudent = (studentId: string) => {
-  if (studentId === '1') {
-    return [
-      {
-        id: '501',
-        trainerId: 'trainer1',
-        trainerName: 'Sarah Johnson',
-        studentId: '1',
-        message: 'Great job hitting your protein targets this week! Consider adding more vegetables to your meals for better micronutrients.',
-        date: new Date(new Date().setDate(new Date().getDate() - 2)),
-      },
-    ];
-  } else if (studentId === '2') {
-    return [
-      {
-        id: '601',
-        trainerId: 'trainer1',
-        trainerName: 'Sarah Johnson',
-        studentId: '2',
-        message: 'I noticed you\'re not hitting your daily calorie goal. Try adding an additional protein-rich snack in the afternoon.',
-        date: new Date(new Date().setDate(new Date().getDate() - 1)),
-      },
-      {
-        id: '602',
-        trainerId: 'trainer1',
-        trainerName: 'Sarah Johnson',
-        studentId: '2',
-        message: 'Remember to log all your meals so we can track your progress accurately.',
-        date: new Date(new Date().setDate(new Date().getDate() - 5)),
-      },
-    ];
-  } else if (studentId === '3') {
-    return [
-      {
-        id: '701',
-        trainerId: 'trainer1',
-        trainerName: 'Sarah Johnson',
-        studentId: '3',
-        message: 'Your macros look well balanced. Keep up the great work with your meal planning!',
-        date: new Date(),
-      },
-    ];
-  }
-  return [];
-};
+import { useMealLogs } from '@/hooks/useMealLogs';
+import { useTrainerFeedback } from '@/hooks/useTrainerFeedback';
+import { FeedbackItem } from '@/hooks/useMacros';
 
 const TrainerDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('students');
   const [students, setStudents] = useState<any[]>([]);
-  const macros = useMacros();
   const { user, getAllStudents } = useAuth();
+  
+  // These hooks will be used when a student is selected
+  const { meals: selectedStudentMeals, isLoading: mealsLoading } = useMealLogs({
+    studentId: selectedStudent?.id
+  });
+  
+  const { 
+    feedback: selectedStudentFeedback, 
+    isLoading: feedbackLoading,
+    addFeedback 
+  } = useTrainerFeedback({
+    studentId: selectedStudent?.id
+  });
   
   useEffect(() => {
     if (user?.id) {
@@ -152,17 +41,17 @@ const TrainerDashboard = () => {
         accountStatus: student.status || 'active',
         dietaryStatus: 'on-track',
         calorieTarget: student.studentDetails?.macroGoals?.calories || 2200,
-        currentCalories: 1950,
+        currentCalories: 0, // Will be calculated from real data
         protein: { 
-          consumed: 120, 
+          consumed: 0, // Will be calculated from real data 
           goal: student.studentDetails?.macroGoals?.protein || 135 
         },
         carbs: { 
-          consumed: 180, 
+          consumed: 0, // Will be calculated from real data
           goal: student.studentDetails?.macroGoals?.carbs || 220 
         },
         fat: { 
-          consumed: 60, 
+          consumed: 0, // Will be calculated from real data
           goal: student.studentDetails?.macroGoals?.fat || 70 
         },
         firstLogin: student.firstLogin,
@@ -174,6 +63,42 @@ const TrainerDashboard = () => {
       setStudents(mappedStudents);
     }
   }, [user?.id, getAllStudents]);
+
+  // Update the selected student's consumed macros based on real data
+  useEffect(() => {
+    if (selectedStudent && selectedStudentMeals.length > 0) {
+      // Calculate the total macros from the meals
+      const consumed = selectedStudentMeals.reduce(
+        (acc, meal) => {
+          return {
+            calories: acc.calories + meal.calories,
+            protein: acc.protein + meal.protein,
+            carbs: acc.carbs + meal.carbs,
+            fat: acc.fat + meal.fat,
+          };
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      );
+      
+      // Update the selected student with real consumption data
+      setSelectedStudent(prevStudent => ({
+        ...prevStudent,
+        currentCalories: consumed.calories,
+        protein: { 
+          ...prevStudent.protein,
+          consumed: consumed.protein
+        },
+        carbs: { 
+          ...prevStudent.carbs,
+          consumed: consumed.carbs
+        },
+        fat: { 
+          ...prevStudent.fat,
+          consumed: consumed.fat
+        },
+      }));
+    }
+  }, [selectedStudent, selectedStudentMeals]);
   
   const handleStudentSelect = (student: typeof students[0]) => {
     setSelectedStudent(student);
@@ -183,8 +108,8 @@ const TrainerDashboard = () => {
     setSelectedStudent(null);
   };
   
-  const handleAddFeedback = (feedback: FeedbackItem) => {
-    macros.addFeedback(feedback);
+  const handleAddFeedback = (feedback: Omit<FeedbackItem, 'id' | 'date' | 'trainerId' | 'trainerName'>) => {
+    addFeedback(feedback);
   };
 
   return (
@@ -206,11 +131,15 @@ const TrainerDashboard = () => {
             <TrainerStudentView
               selectedStudent={selectedStudent}
               students={students}
-              mealsFetcher={getMockMealsForStudent}
-              feedbackFetcher={getMockFeedbackForStudent}
+              mealsFetcher={() => selectedStudentMeals}
+              feedbackFetcher={() => selectedStudentFeedback}
               onStudentSelect={handleStudentSelect}
               onBackToList={handleBackToList}
               onAddFeedback={handleAddFeedback}
+              isLoading={{
+                meals: mealsLoading,
+                feedback: feedbackLoading
+              }}
             />
           </TabsContent>
           
