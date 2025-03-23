@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import UserProfile from '@/components/UserProfile';
 import PageTransition from '@/components/layout/PageTransition';
 import FoodDatabaseManager from '@/components/FoodDatabaseManager';
@@ -17,14 +17,20 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   
   // Sync the foodItems from the hook with our local state when they change
-  React.useEffect(() => {
-    setFoodItemsState(foodItems);
+  useEffect(() => {
+    if (foodItems) {
+      setFoodItemsState(foodItems);
+    }
   }, [foodItems]);
   
-  const { addFood, deleteFood } = useFoodOperations(foodItemsState, setFoodItemsState);
+  const { addFood, deleteFood, isSubmitting } = useFoodOperations(foodItemsState, setFoodItemsState);
   
   const handleAddFood = async (food: FoodItem) => {
-    return addFood(food, user?.id);
+    if (!user || !user.id) {
+      console.error("Cannot add food: No authenticated user found");
+      return false;
+    }
+    return addFood(food, user.id);
   };
   
   return (
@@ -48,7 +54,7 @@ const AdminDashboard = () => {
               foods={foodItemsState}
               onAddFood={handleAddFood}
               onDeleteFood={deleteFood}
-              isLoading={isLoading}
+              isLoading={isLoading || isSubmitting}
               isAdmin={true}
             />
           </TabsContent>

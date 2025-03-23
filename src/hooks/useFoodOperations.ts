@@ -12,6 +12,11 @@ export const useFoodOperations = (foodItems: FoodItem[], setFoodItems: React.Dis
     try {
       setIsSubmitting(true);
       
+      // Check if userId is provided
+      if (!userId) {
+        console.log("No user ID provided for food creation");
+      }
+      
       const { data, error } = await supabase
         .from('food_items')
         .insert({
@@ -29,6 +34,7 @@ export const useFoodOperations = (foodItems: FoodItem[], setFoodItems: React.Dis
         .select();
       
       if (error) {
+        console.error('Error adding food item:', error);
         throw error;
       }
       
