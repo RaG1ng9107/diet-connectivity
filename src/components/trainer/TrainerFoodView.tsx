@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import FoodDatabaseManager from '@/components/FoodDatabaseManager';
 import { FoodItem } from '@/data/foodDatabase';
 import { useFoodItems } from '@/hooks/useFoodItems';

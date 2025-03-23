@@ -12,25 +12,28 @@ export const useFoodOperations = (foodItems: FoodItem[], setFoodItems: React.Dis
     try {
       setIsSubmitting(true);
       
-      // Check if userId is provided
-      if (!userId) {
-        console.log("No user ID provided for food creation");
+      // For adding food items, we'll no longer rely on RLS policies that might cause recursion
+      // Instead, we'll directly include the created_by field in our insert operation if available
+      const insertData = {
+        name: food.name,
+        category: food.category,
+        calories_per_100g: food.caloriesPer100g,
+        protein_per_100g: food.proteinPer100g.toString(),
+        carbs_per_100g: food.carbsPer100g.toString(),
+        fat_per_100g: food.fatPer100g.toString(),
+        recommended_serving: food.recommendedServing,
+        serving_unit: food.servingUnit,
+        trainer_notes: food.trainerNotes
+      };
+      
+      // Only add created_by if userId is provided
+      if (userId) {
+        Object.assign(insertData, { created_by: userId });
       }
       
       const { data, error } = await supabase
         .from('food_items')
-        .insert({
-          name: food.name,
-          category: food.category,
-          calories_per_100g: food.caloriesPer100g,
-          protein_per_100g: food.proteinPer100g.toString(),
-          carbs_per_100g: food.carbsPer100g.toString(),
-          fat_per_100g: food.fatPer100g.toString(),
-          recommended_serving: food.recommendedServing,
-          serving_unit: food.servingUnit,
-          trainer_notes: food.trainerNotes,
-          created_by: userId
-        })
+        .insert(insertData)
         .select();
       
       if (error) {
