@@ -6,8 +6,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useMacros, FeedbackItem } from '@/hooks/useMacros';
 import TrainerStudentView from '@/components/trainer/TrainerStudentView';
 import TrainerFoodView from '@/components/trainer/TrainerFoodView';
+import { Meal } from '@/components/MealLogger';
 
-const getMockMealsForStudent = (studentId: string) => {
+const getMockMealsForStudent = (studentId: string): Meal[] => {
   if (studentId === '1') {
     return [
       {
@@ -15,7 +16,7 @@ const getMockMealsForStudent = (studentId: string) => {
         foodItemId: '1',
         foodItemName: 'Grilled Chicken Breast',
         quantity: 150,
-        servingUnit: 'g',
+        servingUnit: 'g' as const,
         calories: 248,
         protein: 46.5,
         carbs: 0,
@@ -28,7 +29,7 @@ const getMockMealsForStudent = (studentId: string) => {
         foodItemId: '6',
         foodItemName: 'Greek Yogurt',
         quantity: 150,
-        servingUnit: 'g',
+        servingUnit: 'g' as const,
         calories: 88,
         protein: 15,
         carbs: 5.4,
@@ -44,7 +45,7 @@ const getMockMealsForStudent = (studentId: string) => {
         foodItemId: '8',
         foodItemName: 'Sweet Potato',
         quantity: 200,
-        servingUnit: 'g',
+        servingUnit: 'g' as const,
         calories: 172,
         protein: 3.2,
         carbs: 40.2,
@@ -60,7 +61,7 @@ const getMockMealsForStudent = (studentId: string) => {
         foodItemId: '2',
         foodItemName: 'Brown Rice',
         quantity: 100,
-        servingUnit: 'g',
+        servingUnit: 'g' as const,
         calories: 112,
         protein: 2.6,
         carbs: 23.5,
@@ -73,7 +74,7 @@ const getMockMealsForStudent = (studentId: string) => {
         foodItemId: '7',
         foodItemName: 'Salmon Fillet',
         quantity: 120,
-        servingUnit: 'g',
+        servingUnit: 'g' as const,
         calories: 250,
         protein: 24,
         carbs: 0,
