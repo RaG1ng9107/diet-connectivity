@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import UserProfile from '@/components/UserProfile';
 import PageTransition from '@/components/layout/PageTransition';
-import StudentList from '@/components/StudentList';
-import FoodDatabaseManager from '@/components/FoodDatabaseManager';
-import StudentDetail from '@/components/StudentDetail';
-import { useMacros, FeedbackItem } from '@/hooks/useMacros';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Meal } from '@/components/MealLogger';
 import { useAuth } from '@/context/AuthContext';
-import { FoodItem } from '@/data/foodDatabase';
-import { useFoodItems } from '@/hooks/useFoodItems';
-import { useFoodOperations } from '@/hooks/useFoodOperations';
+import { useMacros, FeedbackItem } from '@/hooks/useMacros';
 import TrainerStudentView from '@/components/trainer/TrainerStudentView';
 import TrainerFoodView from '@/components/trainer/TrainerFoodView';
 
-const getMockMealsForStudent = (studentId: string): Meal[] => {
+const getMockMealsForStudent = (studentId: string) => {
   if (studentId === '1') {
     return [
       {
@@ -93,7 +86,7 @@ const getMockMealsForStudent = (studentId: string): Meal[] => {
   return [];
 };
 
-const getMockFeedbackForStudent = (studentId: string): FeedbackItem[] => {
+const getMockFeedbackForStudent = (studentId: string) => {
   if (studentId === '1') {
     return [
       {
@@ -143,16 +136,8 @@ const TrainerDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('students');
   const [students, setStudents] = useState<any[]>([]);
-  const { foodItems, isLoading } = useFoodItems();
-  const [foodItemsState, setFoodItemsState] = useState<FoodItem[]>([]);
   const macros = useMacros();
   const { user, getAllStudents } = useAuth();
-  
-  React.useEffect(() => {
-    setFoodItemsState(foodItems);
-  }, [foodItems]);
-  
-  const { addFood, deleteFood } = useFoodOperations(foodItemsState, setFoodItemsState);
   
   useEffect(() => {
     if (user?.id) {
@@ -201,10 +186,6 @@ const TrainerDashboard = () => {
     macros.addFeedback(feedback);
   };
 
-  const handleAddFood = async (food: FoodItem) => {
-    return addFood(food, user?.id);
-  };
-
   return (
     <PageTransition>
       <div className="container max-w-6xl py-8">
@@ -233,12 +214,7 @@ const TrainerDashboard = () => {
           </TabsContent>
           
           <TabsContent value="foods">
-            <TrainerFoodView
-              foods={foodItemsState}
-              onAddFood={handleAddFood}
-              onDeleteFood={deleteFood}
-              isLoading={isLoading}
-            />
+            <TrainerFoodView />
           </TabsContent>
         </Tabs>
       </div>
