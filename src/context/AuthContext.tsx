@@ -125,7 +125,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: '5',
     name: 'Admin User',
-    email: 'admin@example.com',
+    email: 'admin@nutritek.com',
     password: 'admin123',
     role: 'admin',
   },
