@@ -12,14 +12,14 @@ export type Database = {
       food_items: {
         Row: {
           calories_per_100g: number
-          carbs_per_100g: number | null
+          carbs_per_100g: string | null
           category: Database["public"]["Enums"]["food_category"]
           created_at: string | null
           created_by: string | null
-          fat_per_100g: number | null
+          fat_per_100g: string | null
           id: string
           name: string
-          protein_per_100g: number | null
+          protein_per_100g: string | null
           recommended_serving: number | null
           serving_unit: Database["public"]["Enums"]["serving_unit"] | null
           trainer_notes: string | null
@@ -27,14 +27,14 @@ export type Database = {
         }
         Insert: {
           calories_per_100g: number
-          carbs_per_100g?: number | null
+          carbs_per_100g?: string | null
           category?: Database["public"]["Enums"]["food_category"]
           created_at?: string | null
           created_by?: string | null
-          fat_per_100g?: number | null
+          fat_per_100g?: string | null
           id?: string
           name: string
-          protein_per_100g?: number | null
+          protein_per_100g?: string | null
           recommended_serving?: number | null
           serving_unit?: Database["public"]["Enums"]["serving_unit"] | null
           trainer_notes?: string | null
@@ -42,14 +42,14 @@ export type Database = {
         }
         Update: {
           calories_per_100g?: number
-          carbs_per_100g?: number | null
+          carbs_per_100g?: string | null
           category?: Database["public"]["Enums"]["food_category"]
           created_at?: string | null
           created_by?: string | null
-          fat_per_100g?: number | null
+          fat_per_100g?: string | null
           id?: string
           name?: string
-          protein_per_100g?: number | null
+          protein_per_100g?: string | null
           recommended_serving?: number | null
           serving_unit?: Database["public"]["Enums"]["serving_unit"] | null
           trainer_notes?: string | null

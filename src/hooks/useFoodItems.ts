@@ -52,5 +52,5 @@ export const useFoodItems = () => {
     fetchFoodItems();
   }, [toast]);
 
-  return { foodItems, isLoading };
+  return { foodItems, isLoading, setFoodItems };
 };

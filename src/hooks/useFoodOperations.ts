@@ -14,7 +14,7 @@ export const useFoodOperations = (foodItems: FoodItem[], setFoodItems: React.Dis
       
       const { data, error } = await supabase
         .from('food_items')
-        .insert([{
+        .insert({
           name: food.name,
           category: food.category,
           calories_per_100g: food.caloriesPer100g,
@@ -25,7 +25,7 @@ export const useFoodOperations = (foodItems: FoodItem[], setFoodItems: React.Dis
           serving_unit: food.servingUnit,
           trainer_notes: food.trainerNotes,
           created_by: userId
-        }])
+        })
         .select();
       
       if (error) {

@@ -1,28 +1,27 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import FoodDatabaseManager from '@/components/FoodDatabaseManager';
 import { FoodItem } from '@/data/foodDatabase';
+import { useFoodItems } from '@/hooks/useFoodItems';
+import { useFoodOperations } from '@/hooks/useFoodOperations';
+import { useAuth } from '@/context/AuthContext';
 
-interface TrainerFoodViewProps {
-  foods: FoodItem[];
-  onAddFood: (food: FoodItem) => Promise<boolean>;
-  onDeleteFood: (foodId: string) => Promise<boolean>;
-  isLoading: boolean;
-}
-
-const TrainerFoodView: React.FC<TrainerFoodViewProps> = ({
-  foods,
-  onAddFood,
-  onDeleteFood,
-  isLoading
-}) => {
+const TrainerFoodView: React.FC = () => {
+  const { foodItems, isLoading, setFoodItems } = useFoodItems();
+  const { user } = useAuth();
+  const { addFood, deleteFood, isSubmitting } = useFoodOperations(foodItems, setFoodItems);
+  
+  const handleAddFood = async (food: FoodItem) => {
+    return addFood(food, user?.id);
+  };
+  
   return (
     <FoodDatabaseManager 
-      foods={foods}
-      onAddFood={onAddFood}
-      onDeleteFood={onDeleteFood}
-      isAdmin={false}
-      isLoading={isLoading}
+      foods={foodItems}
+      onAddFood={handleAddFood}
+      onDeleteFood={deleteFood}
+      isAdmin={true}
+      isLoading={isLoading || isSubmitting}
     />
   );
 };
